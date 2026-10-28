@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="20" fill="#050505"/>
+  <circle cx="50" cy="50" r="44" stroke="#1D9BF0" stroke-width="2" stroke-dasharray="4 2" opacity="0.6"/>
+  <!-- SpaceX Stylized X with Rocket Orbital Curve -->
+  <path d="M26 26 L74 74 M74 26 L26 74" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <!-- Orbital Swoosh -->
+  <path d="M20 50 C 35 25, 65 25, 80 50 C 65 75, 35 75, 20 50 Z" stroke="#1D9BF0" stroke-width="3" fill="none" opacity="0.8"/>
+  <!-- Glowing Center Star -->
+  <circle cx="50" cy="50" r="5" fill="#1D9BF0"/>
+  <circle cx="50" cy="50" r="2" fill="#FFFFFF"/>
+</svg>

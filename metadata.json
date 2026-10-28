@@ -1,0 +1,6 @@
+{
+  "name": "ELONVERSE — Elon Musk Technology, Products & Future Hub",
+  "description": "Explore the Technologies Shaping Tomorrow. Comprehensive hub for Tesla, SpaceX, Starlink, xAI Grok, Energy, Optimus, Future Projects & Expral Investment Plans.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
