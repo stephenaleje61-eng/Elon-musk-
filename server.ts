@@ -386,6 +386,11 @@ app.delete('/api/chat/messages', (req, res) => {
   res.json({ success: true });
 });
 
+// Health check for Cloud Run and deployment probes
+app.get(['/health', '/api/health'], (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: Date.now() });
+});
+
 // Setup Vite in Dev or Serve Static in Production
 async function startServer() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -404,9 +409,25 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`ELONVERSE Server running at http://0.0.0.0:${PORT}`);
   });
+
+  const handleShutdown = (signal: string) => {
+    console.log(`Received ${signal}, closing server...`);
+    for (const client of sseClients) {
+      try {
+        client.res.end();
+      } catch {}
+    }
+    server.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 3000);
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
 startServer().catch((err) => {
