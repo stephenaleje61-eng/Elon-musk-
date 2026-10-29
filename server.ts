@@ -143,27 +143,51 @@ app.post('/api/checkout', (req, res) => {
 // REAL-TIME PERSISTENT MULTI-USER CHAT ENGINE
 // ==========================================
 
-interface StoredChatMessage {
+interface StoredPrivateMessage {
   id: string;
+  visitorId: string;
+  sender: 'visitor' | 'owner' | 'admin' | 'elon' | 'system';
+  text: string;
+  message: string;
   name: string;
   city: string;
-  message: string;
   timestamp: number;
   timeString: string;
   isElon: boolean;
   isAdmin: boolean;
-  isVerified?: boolean;
-  isSystem?: boolean;
-  userId: string;
+  isSystem: boolean;
+  isVerified: boolean;
   intent?: string;
   image?: string;
+  imageUrl?: string;
+  senderName?: string;
+  read?: boolean;
   voiceDuration?: number;
 }
 
-const DATA_DIR = path.resolve(__dirname, 'data');
-const CHAT_DATA_FILE = path.join(DATA_DIR, 'elonverse_chat.json');
+interface StoredVisitorDoc {
+  visitorId: string;
+  name: string;
+  location: string;
+  intent?: string;
+  timestamp: number;
+  lastMessage: string;
+  unreadCount?: number;
+}
 
-// Ensure data directory exists
+interface StoredFriendRequest {
+  id: string;
+  visitorId: string;
+  name: string;
+  email: string;
+  location: string;
+  status: 'pending' | 'accepted' | 'declined';
+  timestamp: number;
+}
+
+const DATA_DIR = path.resolve(__dirname, 'data');
+const CHAT_DATA_FILE = path.join(DATA_DIR, 'private_visitors_chat.json');
+
 if (!fs.existsSync(DATA_DIR)) {
   try {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -172,28 +196,48 @@ if (!fs.existsSync(DATA_DIR)) {
   }
 }
 
-// Load messages from disk or initialize
-let messagesStore: StoredChatMessage[] = [];
+// In-memory strictly private storage
+let friendRequestsStore: Record<string, StoredFriendRequest> = {};
+let visitorsStore: Record<string, StoredVisitorDoc> = {};
+let privateMessagesStore: Record<string, StoredPrivateMessage[]> = {};
+
 try {
   if (fs.existsSync(CHAT_DATA_FILE)) {
     const raw = fs.readFileSync(CHAT_DATA_FILE, 'utf-8');
-    messagesStore = JSON.parse(raw);
-    console.log(`Loaded ${messagesStore.length} real persistent messages from disk.`);
+    const parsed = JSON.parse(raw);
+    friendRequestsStore = parsed.requests || {};
+    visitorsStore = parsed.visitors || {};
+    privateMessagesStore = parsed.messages || {};
+    console.log(`Loaded ${Object.keys(visitorsStore).length} private rooms and ${Object.keys(friendRequestsStore).length} requests from disk.`);
   }
 } catch (e) {
-  console.warn('Failed to parse chat data file, starting fresh:', e);
-  messagesStore = [];
+  console.warn('Starting fresh private chat database:', e);
+  friendRequestsStore = {};
+  visitorsStore = {};
+  privateMessagesStore = {};
 }
 
-function persistMessages() {
+function persistPrivateData() {
   try {
-    fs.writeFileSync(CHAT_DATA_FILE, JSON.stringify(messagesStore, null, 2), 'utf-8');
+    fs.writeFileSync(
+      CHAT_DATA_FILE,
+      JSON.stringify(
+        {
+          requests: friendRequestsStore,
+          visitors: visitorsStore,
+          messages: privateMessagesStore,
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
   } catch (err) {
-    console.error('Failed to write chat messages to disk:', err);
+    console.error('Failed to write private chat data to disk:', err);
   }
 }
 
-// Admin Live Presence
+// Admin / Owner Live Presence
 let currentAdminPresence = {
   isOnline: true,
   adminName: 'Elon Musk (Owner)',
@@ -201,20 +245,24 @@ let currentAdminPresence = {
   lastSeen: Date.now(),
 };
 
-// SSE Active Connections for Instant Cross-Device Real-time Broadcast
+// SSE Active Connections for Real-Time Instant Push
 interface SseClient {
   id: string;
-  userId?: string;
-  isAdmin: boolean;
+  visitorId?: string;
+  isOwner: boolean;
   res: express.Response;
 }
 const sseClients: SseClient[] = [];
 
-function broadcastToClients(payload: any, targetUserId?: string) {
+function broadcastToClients(payload: any, targetVisitorId?: string) {
   const dataString = `data: ${JSON.stringify(payload)}\n\n`;
   for (const client of sseClients) {
-    // Send to admins OR matching user thread
-    if (client.isAdmin || !targetUserId || client.userId === targetUserId) {
+    const isTarget = Boolean(
+      targetVisitorId &&
+      client.visitorId &&
+      client.visitorId.toLowerCase() === targetVisitorId.toLowerCase()
+    );
+    if (client.isOwner || isTarget) {
       try {
         client.res.write(dataString);
       } catch (err) {
@@ -224,7 +272,7 @@ function broadcastToClients(payload: any, targetUserId?: string) {
   }
 }
 
-// GET /api/chat/stream - Server-Sent Events (SSE) for Real-Time Instant Push
+// GET /api/chat/stream - Server-Sent Events (SSE) strictly isolated per visitorId
 app.get('/api/chat/stream', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -233,16 +281,15 @@ app.get('/api/chat/stream', (req, res) => {
   res.flushHeaders?.();
 
   const clientId = 'sse-' + Math.random().toString(36).substring(2, 9);
-  const userId = req.query.userId ? String(req.query.userId) : undefined;
-  const isAdmin = req.query.role === 'admin' || req.query.isAdmin === 'true';
+  const rawId = req.query.visitorId || req.query.userId || req.query.id;
+  const visitorId = rawId ? String(rawId).trim() : undefined;
+  const isOwner = req.query.role === 'owner' || req.query.role === 'admin' || req.query.isAdmin === 'true';
 
-  const client: SseClient = { id: clientId, userId, isAdmin, res };
+  const client: SseClient = { id: clientId, visitorId, isOwner, res };
   sseClients.push(client);
 
-  // Send initial handshake
-  res.write(`data: ${JSON.stringify({ type: 'handshake', clientId, connectedAt: Date.now() })}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: 'handshake', clientId, visitorId, isOwner, connectedAt: Date.now() })}\n\n`);
 
-  // Heartbeat every 15s to keep mobile connection alive
   const pingTimer = setInterval(() => {
     try {
       res.write(': ping\n\n');
@@ -260,98 +307,244 @@ app.get('/api/chat/stream', (req, res) => {
   });
 });
 
-// GET /api/chat/messages - Fetch real messages for a thread or all
-app.get('/api/chat/messages', (req, res) => {
-  const userId = req.query.userId ? String(req.query.userId) : null;
-  if (userId && userId !== 'all') {
-    const thread = messagesStore.filter((m) => m.userId === userId);
-    res.json(thread);
+// ==========================================
+// FRIEND REQUESTS & JOIN SPACE ENDPOINTS
+// ==========================================
+
+// POST /api/requests - Visitor submits request to join space
+app.post('/api/requests', (req, res) => {
+  const { visitorId, name, email, location } = req.body;
+  if (!visitorId || !name) {
+    res.status(400).json({ error: 'visitorId and name are required' });
     return;
   }
-  res.json(messagesStore);
+
+  const id = 'req-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+  const newReq: StoredFriendRequest = {
+    id,
+    visitorId,
+    name: String(name).trim(),
+    email: String(email || '').trim(),
+    location: String(location || '').trim(),
+    status: 'pending',
+    timestamp: Date.now(),
+  };
+
+  friendRequestsStore[visitorId] = newReq;
+  persistPrivateData();
+
+  broadcastToClients({ type: 'new_request', request: newReq });
+  res.json({ success: true, request: newReq });
 });
 
-// POST /api/chat/messages - Post a real message (Visitor or Owner or Elon)
-app.post('/api/chat/messages', (req, res) => {
-  const { name, city, message, isElon, isAdmin, isSystem, isVerified, userId, intent, image, voiceDuration } = req.body;
+// GET /api/requests - Admin list all requests
+app.get('/api/requests', (_req, res) => {
+  const list = Object.values(friendRequestsStore).sort((a, b) => b.timestamp - a.timestamp);
+  res.json(list);
+});
 
-  if (!message && !image && !voiceDuration) {
-    res.status(400).json({ error: 'Message content is required' });
+// GET /api/requests/status - Visitor checks their own request status
+app.get('/api/requests/status', (req, res) => {
+  const visitorId = req.query.visitorId ? String(req.query.visitorId) : null;
+  if (!visitorId) {
+    res.status(400).json({ error: 'visitorId is required' });
+    return;
+  }
+  const found = friendRequestsStore[visitorId] || null;
+  res.json({ request: found });
+});
+
+// PATCH /api/requests/:visitorId - Admin accept or decline request
+app.patch('/api/requests/:visitorId', (req, res) => {
+  const { visitorId } = req.params;
+  const { status } = req.body;
+  const existing = friendRequestsStore[visitorId];
+
+  if (!existing) {
+    res.status(404).json({ error: 'Request not found' });
+    return;
+  }
+
+  existing.status = status === 'accepted' ? 'accepted' : 'declined';
+
+  if (existing.status === 'accepted') {
+    // Automatically initialize private chat room for approved visitor
+    if (!visitorsStore[visitorId]) {
+      visitorsStore[visitorId] = {
+        visitorId,
+        name: existing.name,
+        location: existing.location,
+        timestamp: Date.now(),
+        lastMessage: 'Request approved. Private room ready.',
+        unreadCount: 0,
+      };
+    }
+    if (!privateMessagesStore[visitorId]) {
+      privateMessagesStore[visitorId] = [];
+    }
+  }
+
+  persistPrivateData();
+  broadcastToClients({ type: 'request_updated', request: existing }, visitorId);
+  res.json({ success: true, request: existing });
+});
+
+// POST /api/chat/visitors - Register or update a visitor document in 'visitors' collection
+app.post('/api/chat/visitors', (req, res) => {
+  const { visitorId, name, location, intent, lastMessage } = req.body;
+  if (!visitorId) {
+    res.status(400).json({ error: 'visitorId is required' });
     return;
   }
 
   const now = Date.now();
-  const timeString = new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  const newMessage: StoredChatMessage = {
-    id: 'msg-' + now + '-' + Math.random().toString(36).substring(2, 7),
-    name: name || (isAdmin ? 'Admin' : isElon ? 'Elon Musk' : 'Visitor'),
-    city: city || 'Austin, TX',
-    message: String(message || ''),
+  const existing = visitorsStore[visitorId];
+  const updatedDoc: StoredVisitorDoc = {
+    visitorId,
+    name: name || existing?.name || 'Visitor',
+    location: location || existing?.location || 'USA',
+    intent: intent || existing?.intent || '',
     timestamp: now,
-    timeString,
-    isElon: Boolean(isElon),
-    isAdmin: Boolean(isAdmin),
-    isSystem: Boolean(isSystem),
-    isVerified: Boolean(isVerified || isAdmin || isElon),
-    userId: userId || 'general',
-    intent: intent || undefined,
-    image: image || undefined,
-    voiceDuration: voiceDuration || undefined,
+    lastMessage: lastMessage || existing?.lastMessage || 'Connected to private chat',
+    unreadCount: existing?.unreadCount || 0,
   };
 
-  messagesStore.push(newMessage);
-  persistMessages();
+  visitorsStore[visitorId] = updatedDoc;
+  if (!privateMessagesStore[visitorId]) {
+    privateMessagesStore[visitorId] = [];
+  }
+  persistPrivateData();
 
-  // Instant real-time push to all matching devices
-  broadcastToClients({ type: 'new_message', message: newMessage }, newMessage.userId);
-
-  res.json({ success: true, message: newMessage });
+  broadcastToClients({ type: 'visitor_updated', visitor: updatedDoc });
+  res.json({ success: true, visitor: updatedDoc });
 });
 
-// GET /api/chat/conversations - List all real visitor threads for Owner /admin dashboard
-app.get('/api/chat/conversations', (_req, res) => {
-  const conversationMap = new Map<string, {
-    userId: string;
-    userName: string;
-    userCity: string;
-    lastMessage: string;
-    lastTimestamp: number;
-    intent?: string;
-    unreadCount: number;
-  }>();
+// GET /api/chat/visitors (or /api/chat/conversations) - List all private visitor rooms for Owner Inbox
+app.get(['/api/chat/visitors', '/api/chat/conversations'], (_req, res) => {
+  const list = Object.values(visitorsStore).sort((a, b) => b.timestamp - a.timestamp);
+  // Map to format consumed by owner dashboard
+  const mapped = list.map((v) => ({
+    userId: v.visitorId,
+    visitorId: v.visitorId,
+    userName: v.name,
+    name: v.name,
+    userCity: v.location,
+    location: v.location,
+    lastMessage: v.lastMessage,
+    lastTimestamp: v.timestamp,
+    timestamp: v.timestamp,
+    intent: v.intent,
+    unreadCount: v.unreadCount || 0,
+  }));
+  res.json(mapped);
+});
 
-  for (const m of messagesStore) {
-    if (!m.userId || m.userId === 'general') continue;
+// GET /api/chat/messages - STRICT: Fetch messages ONLY for the requested visitorId
+app.get('/api/chat/messages', (req, res) => {
+  const visitorId = req.query.visitorId ? String(req.query.visitorId) : req.query.userId ? String(req.query.userId) : null;
 
-    const existing = conversationMap.get(m.userId);
-    const isVisitor = !m.isAdmin && !m.isElon && !m.isSystem;
-
-    if (!existing) {
-      conversationMap.set(m.userId, {
-        userId: m.userId,
-        userName: isVisitor ? m.name : 'Visitor',
-        userCity: isVisitor ? m.city : 'USA',
-        lastMessage: m.message,
-        lastTimestamp: m.timestamp,
-        intent: m.intent,
-        unreadCount: isVisitor ? 1 : 0,
-      });
-    } else {
-      if (isVisitor) {
-        existing.userName = m.name;
-        existing.userCity = m.city;
-        if (m.intent) existing.intent = m.intent;
-      }
-      if (m.timestamp >= existing.lastTimestamp) {
-        existing.lastMessage = m.message;
-        existing.lastTimestamp = m.timestamp;
-      }
-    }
+  if (!visitorId || visitorId === 'all') {
+    // SECURITY: Visitors can NEVER fetch all messages! Return empty or 400
+    res.status(400).json({ error: 'visitorId parameter is required to access private room' });
+    return;
   }
 
-  const list = Array.from(conversationMap.values()).sort((a, b) => b.lastTimestamp - a.lastTimestamp);
-  res.json(list);
+  const thread = privateMessagesStore[visitorId] || [];
+  res.json(thread);
+});
+
+// POST /api/chat/messages - Send a message to visitors/{visitorId}/messages
+app.post('/api/chat/messages', (req, res) => {
+  const {
+    visitorId: rawVisitorId,
+    userId: rawUserId,
+    id: rawId,
+    sender: rawSender,
+    senderName: rawSenderName,
+    name,
+    city,
+    location,
+    message,
+    text,
+    imageUrl,
+    image,
+    isAdmin,
+  } = req.body;
+
+  const targetVisitorId = String(rawVisitorId || rawUserId || rawId || '').trim();
+  if (!targetVisitorId) {
+    res.status(400).json({ error: 'visitorId is required for private 1-on-1 chat' });
+    return;
+  }
+
+  const content = String(text || message || '').trim();
+  const img = imageUrl || image || null;
+  if (!content && !img) {
+    res.status(400).json({ error: 'Message text or image is required' });
+    return;
+  }
+
+  const normalizedSender: 'admin' | 'visitor' =
+    rawSender === 'admin' || rawSender === 'owner' || isAdmin ? 'admin' : 'visitor';
+
+  const now = Date.now();
+  const timeString = new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const newMessage: StoredPrivateMessage = {
+    id: 'msg-' + now + '-' + Math.random().toString(36).substring(2, 7),
+    visitorId: targetVisitorId,
+    sender: normalizedSender,
+    senderName: rawSenderName || (normalizedSender === 'admin' ? 'Elon Musk (Admin)' : (name || 'Visitor')),
+    text: content,
+    message: content,
+    imageUrl: img || undefined,
+    name: name || (normalizedSender === 'admin' ? 'Elon Musk (Admin)' : 'Visitor'),
+    city: city || location || 'Texas',
+    timestamp: now,
+    timeString,
+    read: false,
+    isElon: false,
+    isAdmin: normalizedSender === 'admin',
+    isSystem: false,
+    isVerified: true,
+  };
+
+  if (!privateMessagesStore[targetVisitorId]) {
+    privateMessagesStore[targetVisitorId] = [];
+  }
+  privateMessagesStore[targetVisitorId].push(newMessage);
+
+  // Update visitor doc in 'visitors' collection
+  let visitor = visitorsStore[targetVisitorId];
+  const lastSummary = content || (img ? '[Picture]' : '');
+  if (!visitor) {
+    visitor = {
+      visitorId: targetVisitorId,
+      name: normalizedSender === 'visitor' ? (name || 'Visitor') : 'Visitor',
+      location: city || location || 'Texas',
+      intent: '',
+      timestamp: now,
+      lastMessage: lastSummary,
+      unreadCount: normalizedSender === 'visitor' ? 1 : 0,
+    };
+  } else {
+    if (normalizedSender === 'visitor') {
+      if (name) visitor.name = name;
+      if (city || location) visitor.location = city || location;
+      visitor.unreadCount = (visitor.unreadCount || 0) + 1;
+    } else {
+      visitor.unreadCount = 0;
+    }
+    visitor.timestamp = now;
+    visitor.lastMessage = lastSummary;
+  }
+  visitorsStore[targetVisitorId] = visitor;
+  persistPrivateData();
+
+  // STRICT REAL-TIME BROADCAST: push to target visitor and admin!
+  broadcastToClients({ type: 'new_message', message: newMessage, visitorId: targetVisitorId, visitor }, targetVisitorId);
+
+  res.json({ success: true, message: newMessage, visitor });
 });
 
 // GET /api/chat/presence - Get current Admin Presence
@@ -373,16 +566,18 @@ app.post('/api/chat/presence', (req, res) => {
   res.json({ success: true, presence: currentAdminPresence });
 });
 
-// DELETE /api/chat/messages - Admin clear thread
+// DELETE /api/chat/messages - Owner clear a visitor's private thread
 app.delete('/api/chat/messages', (req, res) => {
-  const userId = req.query.userId ? String(req.query.userId) : null;
-  if (userId) {
-    messagesStore = messagesStore.filter((m) => m.userId !== userId);
-  } else {
-    messagesStore = [];
+  const visitorId = req.query.visitorId ? String(req.query.visitorId) : req.query.userId ? String(req.query.userId) : null;
+  if (visitorId && privateMessagesStore[visitorId]) {
+    privateMessagesStore[visitorId] = [];
+    if (visitorsStore[visitorId]) {
+      visitorsStore[visitorId].lastMessage = 'Thread cleared';
+      visitorsStore[visitorId].unreadCount = 0;
+    }
+    persistPrivateData();
+    broadcastToClients({ type: 'cleared', visitorId, userId: visitorId }, visitorId);
   }
-  persistMessages();
-  broadcastToClients({ type: 'cleared', userId });
   res.json({ success: true });
 });
 

@@ -52,6 +52,15 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
 
   const prevConversationsCount = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollH = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = `${Math.min(Math.max(scrollH, 120), 200)}px`;
+    }
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,19 +172,28 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
 
     sounds.playSentSound();
     setReplyText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '120px';
+    }
 
     await sendChatMessage({
       name: adminName,
       city: adminCity,
       message: clean,
+      sender: 'owner',
       isElon: false,
       isAdmin: true,
       userId: selectedUserId,
+      visitorId: selectedUserId,
     });
   };
 
   const handleQuickSnippet = (snippet: string) => {
     setReplyText(snippet);
+    setTimeout(() => {
+      adjustTextareaHeight();
+      textareaRef.current?.focus();
+    }, 10);
   };
 
   return (
@@ -303,21 +321,26 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
         </div>
       )}
 
-      {/* Main Admin Workspace: 2-3 Columns */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Incoming Visitors List */}
-        <aside className="w-80 bg-[#090909] border-r border-neutral-800 flex flex-col justify-between">
-          <div className="p-3 border-b border-neutral-800 text-xs font-mono text-neutral-400 flex items-center justify-between">
-            <span>ACTIVE VISITORS ({conversations.length})</span>
-            <span className="text-emerald-400">&#9679; Real Live</span>
+      {/* Main Admin Workspace: 2 Columns (30% Visitors / 70% Chat on mobile) */}
+      <div className="flex-1 flex overflow-hidden w-full">
+        {/* Left: Incoming Visitors List (30% on mobile, fixed w-72 or w-80 on desktop) */}
+        <aside className="w-[30%] sm:w-72 md:w-80 bg-[#090909] border-r border-neutral-800 flex flex-col justify-between shrink-0 overflow-y-auto">
+          <div className="p-2 sm:p-3 border-b border-neutral-800 text-[10px] sm:text-xs font-mono text-neutral-300 flex items-center justify-between bg-black/40">
+            <div className="flex items-center gap-1.5 font-bold tracking-wider text-amber-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>PRIVATE INBOX</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-[10px] text-neutral-400 font-bold">
+              {conversations.length}
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-neutral-900">
             {conversations.length === 0 ? (
-              <div className="p-8 text-center text-xs text-neutral-500 font-mono">
+              <div className="p-4 sm:p-8 text-center text-[10px] sm:text-xs text-neutral-500 font-mono">
                 No active visitors yet.
                 <br />
-                Open /chat in another tab or device to test!
+                Open /chat to test private room!
               </div>
             ) : (
               conversations.map((c) => {
@@ -331,34 +354,37 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
                   <button
                     key={c.userId}
                     onClick={() => setSelectedUserId(c.userId)}
-                    className={`w-full p-3.5 text-left transition-colors flex flex-col gap-1 ${
+                    className={`w-full p-2 sm:p-3.5 text-left transition-colors flex flex-col gap-0.5 sm:gap-1 ${
                       isSelected
-                        ? 'bg-neutral-900 border-l-4 border-amber-400'
+                        ? 'bg-neutral-900 border-l-2 sm:border-l-4 border-amber-400'
                         : 'hover:bg-neutral-950 text-neutral-400'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white truncate">{c.userName}</span>
-                      <span className="text-[10px] text-neutral-500 font-mono">
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1.5 truncate">
+                        {c.unreadCount > 0 ? (
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" title="New message" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 shrink-0" />
+                        )}
+                        <span className="text-[11px] sm:text-xs font-bold text-white truncate">{c.userName || c.name}</span>
+                      </div>
+                      <span className="text-[9px] sm:text-[10px] text-neutral-500 font-mono hidden md:inline">
                         {new Date(c.lastTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-mono">
-                      <MapPin className="w-3 h-3 text-neutral-500 shrink-0" />
-                      <span className="truncate">{c.userCity}</span>
-                      {isOrder ? (
-                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold uppercase flex items-center gap-1 animate-pulse shrink-0">
-                          🛒 ORDER
+                    <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-neutral-400 font-mono">
+                      <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-neutral-500 shrink-0" />
+                      <span className="truncate">{c.userCity || c.location}</span>
+                      {isOrder && (
+                        <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[8px] sm:text-[9px] font-bold uppercase shrink-0">
+                          🛒
                         </span>
-                      ) : c.intent ? (
-                        <span className="px-1.5 py-0.2 rounded bg-neutral-800 text-sky-400 uppercase text-[9px] font-bold truncate">
-                          {c.intent}
-                        </span>
-                      ) : null}
+                      )}
                     </div>
 
-                    <p className="text-xs text-neutral-300 truncate mt-0.5">
+                    <p className="text-[10px] sm:text-xs text-neutral-300 truncate mt-0.5">
                       {c.lastMessage}
                     </p>
                   </button>
@@ -367,36 +393,36 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
             )}
           </div>
 
-          <div className="p-3 bg-neutral-950 border-t border-neutral-800 text-xs font-mono text-neutral-500 text-center">
-            Owner ID: admin-starbase-01
+          <div className="p-2 sm:p-3 bg-neutral-950 border-t border-neutral-800 text-[10px] sm:text-xs font-mono text-neutral-400 text-center truncate">
+            Owner ID: <span className="text-amber-400 font-bold">elon_musk_owner</span>
           </div>
         </aside>
 
-        {/* Center: Selected Visitor 1-on-1 Chat Thread */}
-        <main className="flex-1 flex flex-col bg-[#050505] relative overflow-hidden">
+        {/* Center: Selected Visitor 1-on-1 Chat Thread (70% on mobile, flex-1 on desktop) */}
+        <main className="w-[70%] sm:flex-1 flex flex-col bg-[#050505] relative overflow-hidden h-full">
           {activeConv ? (
             <>
               {/* Thread Header */}
-              <div className="h-14 px-6 bg-[#090909] border-b border-neutral-800 flex items-center justify-between">
+              <div className="h-16 px-4 sm:px-6 bg-[#090909] border-b border-neutral-800 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white">{activeConv.userName}</span>
-                    <span className="text-xs text-neutral-400 font-mono">&bull; {activeConv.userCity}</span>
-                    {activeConv.intent && (
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800 font-mono font-bold uppercase">
-                        {activeConv.intent}
-                      </span>
-                    )}
+                    <span className="text-xs sm:text-base font-extrabold text-white truncate">
+                      Private chat with {activeConv.userName || activeConv.name} - {activeConv.userCity || activeConv.location}
+                    </span>
+                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/40 text-[10px] font-mono font-bold items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Private 1-on-1
+                    </span>
                   </div>
                   <span className="text-[10px] text-neutral-500 font-mono">
-                    User Session: {activeConv.userId}
+                    Room: visitors/{activeConv.userId}/messages
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Real-time connected</span>
+                    <span className="hidden md:inline">Private &amp; Encrypted</span>
                   </div>
 
                   <button
@@ -420,13 +446,13 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
                   <div className="flex items-center gap-1.5 text-xs font-mono">
                     <span className="text-neutral-400 text-[11px] hidden sm:inline">1-Click Replies:</span>
                     <button
-                      onClick={() => setReplyText(`Hello ${activeConv.userName}! Elon here (Owner 👑). I received your order! Let's get your delivery location and finalize payment.`)}
+                      onClick={() => handleQuickSnippet(`Hello ${activeConv.userName}! Elon here (Owner 👑). I received your order! Let's get your delivery location and finalize payment.`)}
                       className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-black border border-amber-500/40 text-[11px] font-bold transition-colors"
                     >
                       Delivery &amp; Details
                     </button>
                     <button
-                      onClick={() => setReplyText(`Your order has been logged! How would you prefer to complete payment (Bank Wire, Card, or Crypto)?`)}
+                      onClick={() => handleQuickSnippet(`Your order has been logged! How would you prefer to complete payment (Bank Wire, Card, or Crypto)?`)}
                       className="px-2.5 py-1 rounded bg-sky-950 text-sky-300 hover:bg-sky-500 hover:text-black border border-sky-800 text-[11px] font-bold transition-colors"
                     >
                       Payment Options
@@ -493,47 +519,80 @@ export const AdminChatDashboard: React.FC<AdminChatDashboardProps> = ({ onBackTo
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Response Shortcuts */}
-              <div className="px-6 py-2 bg-neutral-950 border-t border-neutral-900 flex items-center gap-2 overflow-x-auto text-[11px] font-mono no-scrollbar">
-                <span className="text-neutral-500 shrink-0">Snippets:</span>
-                <button
-                  onClick={() => handleQuickSnippet("Hello! I am the Starbase Owner. I saw you're interested in our investment plan. How much capital are you considering allocating?")}
-                  className="whitespace-nowrap px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
-                >
-                  💼 Investment Reply
-                </button>
-                <button
-                  onClick={() => handleQuickSnippet("Hi! I can assist with placing your Tesla vehicle or Cybertruck order directly from Austin. Which trim do you prefer?")}
-                  className="whitespace-nowrap px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
-                >
-                  🚘 Vehicle Order Reply
-                </button>
-                <button
-                  onClick={() => handleQuickSnippet("Great to meet you! What is your engineering background and resume link for our Starbase team?")}
-                  className="whitespace-nowrap px-2.5 py-1 rounded bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white"
-                >
-                  🚀 Job Reply
-                </button>
-              </div>
-
-              {/* Admin Reply Input Bar */}
-              <div className="p-4 bg-neutral-950 border-t border-neutral-800">
-                <form onSubmit={handleSendAdminReply} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder={`Reply to ${activeConv.userName} as ADMIN - Starbase, TX 👑...`}
-                    className="flex-1 bg-neutral-900 border border-neutral-700 rounded-2xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
-                  />
+              {/* Sticky Bottom WhatsApp-style Admin Reply Area */}
+              <div
+                className="sticky bottom-0 z-50 p-3 sm:p-4 bg-zinc-950/95 backdrop-blur-md border-t-2 border-yellow-500/70 shadow-2xl"
+                style={{ position: 'sticky', bottom: 0, zIndex: 50 }}
+              >
+                {/* Snippets Toolbar (Above Textarea so it never covers what you type) */}
+                <div className="mb-2.5 flex items-center gap-2 overflow-x-auto text-[11px] font-mono no-scrollbar">
+                  <span className="text-yellow-400 font-bold shrink-0 flex items-center gap-1">
+                    <span>⚡</span>
+                    <span>Snippets:</span>
+                  </span>
                   <button
-                    type="submit"
-                    disabled={!replyText.trim()}
-                    className="px-5 py-3 rounded-2xl bg-amber-400 text-black font-extrabold text-xs hover:bg-amber-300 disabled:opacity-40 transition-colors shadow-lg flex items-center gap-1.5"
+                    type="button"
+                    onClick={() => handleQuickSnippet("Hello! I am the Starbase Owner. I saw you're interested in our investment plan. How much capital are you considering allocating?")}
+                    className="whitespace-nowrap px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white transition-colors"
                   >
-                    <span>Reply</span>
-                    <Send className="w-3.5 h-3.5" />
+                    💼 Investment Reply
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickSnippet("Hi! I can assist with placing your Tesla vehicle or Cybertruck order directly from Austin. Which trim do you prefer?")}
+                    className="whitespace-nowrap px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white transition-colors"
+                  >
+                    🚘 Vehicle Order Reply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickSnippet("Great to meet you! What is your engineering background and resume link for our Starbase team?")}
+                    className="whitespace-nowrap px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white transition-colors"
+                  >
+                    🚀 Job Reply
+                  </button>
+                </div>
+
+                {/* Big WhatsApp-style Chat Textarea */}
+                <form onSubmit={handleSendAdminReply} className="flex flex-col gap-2.5">
+                  <div className="relative w-full">
+                    <textarea
+                      ref={textareaRef}
+                      value={replyText}
+                      onChange={(e) => {
+                        setReplyText(e.target.value);
+                        adjustTextareaHeight();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (replyText.trim()) {
+                            handleSendAdminReply(e);
+                          }
+                        }
+                      }}
+                      placeholder={`Type your reply to ${activeConv.userName || 'Alex'}...`}
+                      rows={3}
+                      className="w-full min-h-[120px] max-h-[200px] p-4 text-[16px] sm:text-lg bg-zinc-900 border-2 border-yellow-500 rounded-xl text-white placeholder-zinc-400 focus:outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-500/40 transition-all leading-relaxed shadow-inner resize-y"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] sm:text-xs text-zinc-400 font-mono flex items-center gap-1.5 truncate">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span className="truncate">Replying to <strong className="text-white">{activeConv.userName || 'Alex'}</strong></span>
+                      <span className="hidden md:inline text-zinc-500">&bull; Press Enter to send, Shift+Enter for new line</span>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={!replyText.trim()}
+                      className="ml-auto px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-extrabold text-sm sm:text-base hover:from-yellow-400 hover:to-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
+                    >
+                      <span>SEND REPLY</span>
+                      <Send className="w-4 h-4 fill-black" />
+                    </button>
+                  </div>
                 </form>
               </div>
             </>

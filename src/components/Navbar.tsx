@@ -57,12 +57,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full bg-[#050505]/90 backdrop-blur-md border-b border-neutral-800/80 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Left: Brand Wordmark */}
+        {/* Left: Brand Wordmark with Website Icon */}
         <a
           href="#"
-          className="text-white font-extrabold text-base sm:text-lg tracking-[0.25em] uppercase whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2.5 text-white font-extrabold text-base sm:text-lg tracking-[0.25em] uppercase whitespace-nowrap shrink-0 hover:opacity-90 transition-opacity"
         >
-          ELONVERSE
+          <img
+            src="/assets/aistudio/IMG-20261028-WA2144_29cec097.jpg"
+            alt="Elonverse Icon"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white/30 shadow-sm"
+          />
+          <span>ELONVERSE</span>
         </a>
 
         {/* Center: Desktop Nav Links */}

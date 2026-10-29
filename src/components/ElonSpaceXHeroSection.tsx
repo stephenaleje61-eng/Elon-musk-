@@ -96,7 +96,7 @@ export const ElonSpaceXHeroSection: React.FC<ElonSpaceXHeroSectionProps> = ({
         <div className="relative mb-6 group">
           <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-[#1D9BF0] via-white to-sky-400 shadow-[0_0_35px_rgba(29,155,240,0.6)]">
             <img
-              src="/src/assets/images/elon_musk_portrait_tech_1793126106617.jpg"
+              src="/assets/aistudio/IMG-20261028-WA2144_29cec097.jpg"
               alt="Elon Musk"
               referrerPolicy="no-referrer"
               className="w-full h-full rounded-full object-cover border-2 border-black"

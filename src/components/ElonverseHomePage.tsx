@@ -14,7 +14,7 @@ import { CartAndCheckoutSection } from './CartAndCheckoutSection';
 import { MessageElonBanner } from './MessageElonBanner';
 import { Footer } from './Footer';
 import { GlobalSearchModal } from './GlobalSearchModal';
-import { sendChatMessage } from '../services/firebaseChat';
+import { sendChatMessage, registerVisitor } from '../services/firebaseChat';
 import { sounds } from '../utils/audio';
 import { VerifiedBadge } from './VerifiedBadge';
 import { ArrowRight, X, ShieldCheck, ShoppingCart, MessageSquare, MapPin } from 'lucide-react';
@@ -184,14 +184,25 @@ export const ElonverseHomePage: React.FC<ElonverseHomePageProps> = ({
     } catch {}
 
     try {
+      // Register visitor document in 'visitors' collection
+      await registerVisitor({
+        visitorId: currentUserId,
+        name: finalName,
+        location: finalCity,
+        intent: `order: ${itemTitle}`,
+        lastMessage: `Order: ${itemTitle}`,
+      });
+
       // 1. Send customer's order inquiry message
       await sendChatMessage({
         name: finalName,
         city: finalCity,
         message: `Hello Elon! 🚗 I want to order the ${itemTitle}${itemPrice ? ` ($${itemPrice.toLocaleString()})` : ''}. Can we have a private chat to discuss details, delivery, and complete my purchase?`,
+        sender: 'visitor',
         isElon: false,
         isAdmin: false,
         userId: currentUserId,
+        visitorId: currentUserId,
         intent: `order: ${itemTitle}`,
       });
 
@@ -200,10 +211,12 @@ export const ElonverseHomePage: React.FC<ElonverseHomePageProps> = ({
         name: 'System',
         city: 'Starbase, TX',
         message: `🚀 Order request for "${itemTitle}" sent directly to Elon Musk 👑 (Verified Owner)! Elon has been alerted and will chat with you privately right here.`,
+        sender: 'system',
         isElon: false,
         isAdmin: false,
         isSystem: true,
         userId: currentUserId,
+        visitorId: currentUserId,
         intent: `order: ${itemTitle}`,
       });
 

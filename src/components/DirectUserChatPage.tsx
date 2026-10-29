@@ -20,6 +20,7 @@ import {
   subscribeToUserChat,
   sendChatMessage,
   subscribeToAdminPresence,
+  registerVisitor,
 } from '../services/firebaseChat';
 import { sounds } from '../utils/audio';
 import { VerifiedBadge } from './VerifiedBadge';
@@ -53,8 +54,18 @@ export const DirectUserChatPage: React.FC<DirectUserChatPageProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Subscribe to this user's 1-on-1 thread
+  // Subscribe to this user's private 1-on-1 thread
   useEffect(() => {
+    // 1. Create document in 'visitors' collection
+    registerVisitor({
+      visitorId: userId,
+      name: userName || 'Visitor',
+      location: userCity || 'USA',
+      intent: currentIntent || '',
+      lastMessage: 'Opened private chat',
+    });
+
+    // 2. ONLY listen to: visitors/{his_visitorId}/messages
     const unsubscribeChat = subscribeToUserChat(userId, (msgs) => {
       setMessages(msgs);
       // Check if auto welcome was already sent in this thread
@@ -72,7 +83,7 @@ export const DirectUserChatPage: React.FC<DirectUserChatPageProps> = ({
       unsubscribeChat();
       unsubscribePresence();
     };
-  }, [userId]);
+  }, [userId, userName, userCity]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -236,9 +247,11 @@ You are connected directly to the Starbase command desk. The Owner / Admin is on
       name: userName,
       city: userCity,
       message: cleanText,
+      sender: 'visitor',
       isElon: false,
       isAdmin: false,
       userId,
+      visitorId: userId,
       intent: currentIntent || undefined,
     });
 
@@ -328,14 +341,12 @@ You are connected directly to the Starbase command desk. The Owner / Admin is on
           </div>
         </div>
 
-        {/* Center Tag: American Edition */}
-        <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-neutral-400">
-          <span>🇺🇸</span>
-          <span className="text-white font-medium">LIVE FROM AUSTIN, TEXAS</span>
-          <span>&bull;</span>
-          <span>STARBASE</span>
-          <span>&bull;</span>
-          <span>CAPE CANAVERAL</span>
+        {/* Center Tag: Elon Musk Space - Private & Encrypted */}
+        <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/60 px-4 py-1.5 rounded-full border border-emerald-500/40 shadow-sm">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-bold tracking-wider uppercase text-emerald-300">
+            Elon Musk Space - Private &amp; Encrypted 🔒
+          </span>
         </div>
 
         {/* Right: Live Admin Online Presence Indicator */}
@@ -653,15 +664,15 @@ You are connected directly to the Starbase command desk. The Owner / Admin is on
             </button>
           </div>
 
-          {/* Chat Input Bar */}
-          <div className="p-3 sm:p-4 bg-neutral-950 border-t border-neutral-800/80">
+          {/* Chat Input Bar (Sticky at bottom, 16px font for easy mobile typing) */}
+          <div className="sticky bottom-0 z-40 p-3 sm:p-4 bg-neutral-950/95 backdrop-blur-md border-t border-neutral-800/80 shadow-xl">
             <form onSubmit={handleSendText} className="flex items-center gap-2">
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Message Elon AI &amp; Starbase Owner... (or reply 1-5)"
-                className="flex-1 bg-neutral-900 border border-neutral-700/80 rounded-2xl px-4 py-3 text-xs sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-white transition-colors"
+                className="flex-1 bg-neutral-900 border border-neutral-700/80 rounded-2xl px-4 py-3 text-[16px] sm:text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-white transition-colors"
               />
 
               <button
