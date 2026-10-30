@@ -1,15 +1,114 @@
 {
   "requests": {
+    "req-rita-australia": {
+      "id": "req-rita-australia",
+      "visitorId": "req-rita-australia",
+      "name": "RITA",
+      "email": "rita.aus@space.net",
+      "location": "AUSTRALIA",
+      "status": "pending",
+      "timestamp": 1793346800000
+    },
     "vis-5tsd6g4q-mvtq10x5": {
       "id": "req-1793289142497-alhz",
       "visitorId": "vis-5tsd6g4q-mvtq10x5",
-      "name": "Elon musk",
+      "name": "ELON MUSK",
       "email": "elonmuskspace241@gmail.com",
-      "location": "Texas",
-      "status": "pending",
+      "location": "TEXAS",
+      "status": "accepted",
       "timestamp": 1793289142497
     }
   },
-  "visitors": {},
-  "messages": {}
+  "visitors": {
+    "chat-elon-musk-texas": {
+      "visitorId": "chat-elon-musk-texas",
+      "name": "ELON MUSK",
+      "location": "TEXAS",
+      "timestamp": 1793346718336,
+      "lastMessage": "Telemetry check",
+      "unreadCount": 0
+    },
+    "vis-5tsd6g4q-mvtq10x5": {
+      "visitorId": "vis-5tsd6g4q-mvtq10x5",
+      "name": "ELON MUSK",
+      "location": "TEXAS",
+      "timestamp": 1793346718336,
+      "lastMessage": "Telemetry check",
+      "unreadCount": 0
+    }
+  },
+  "messages": {
+    "chat-elon-musk-texas": [
+      {
+        "id": "msg-1793289142497-init",
+        "visitorId": "chat-elon-musk-texas",
+        "sender": "admin",
+        "senderName": "Elon Musk (Admin)",
+        "text": "Space transmission channel verified and accepted. Direct encrypted link established.",
+        "message": "Space transmission channel verified and accepted. Direct encrypted link established.",
+        "name": "ELON MUSK",
+        "city": "TEXAS",
+        "timestamp": 1793289142497,
+        "timeString": "04:54 PM",
+        "read": true,
+        "isElon": false,
+        "isAdmin": true,
+        "isSystem": false,
+        "isVerified": true
+      },
+      {
+        "id": "msg-1793346718336-7c19g",
+        "visitorId": "chat-elon-musk-texas",
+        "sender": "visitor",
+        "senderName": "ELON MUSK",
+        "text": "Telemetry check",
+        "message": "Telemetry check",
+        "name": "ELON MUSK",
+        "city": "TEXAS",
+        "timestamp": 1793346718336,
+        "timeString": "07:51 AM",
+        "read": false,
+        "isElon": false,
+        "isAdmin": false,
+        "isSystem": false,
+        "isVerified": true
+      }
+    ],
+    "vis-5tsd6g4q-mvtq10x5": [
+      {
+        "id": "msg-1793289142497-init",
+        "visitorId": "vis-5tsd6g4q-mvtq10x5",
+        "sender": "admin",
+        "senderName": "Elon Musk (Admin)",
+        "text": "Space transmission channel verified and accepted. Direct encrypted link established.",
+        "message": "Space transmission channel verified and accepted. Direct encrypted link established.",
+        "name": "ELON MUSK",
+        "city": "TEXAS",
+        "timestamp": 1793289142497,
+        "timeString": "04:54 PM",
+        "read": true,
+        "isElon": false,
+        "isAdmin": true,
+        "isSystem": false,
+        "isVerified": true
+      },
+      {
+        "id": "msg-1793346718336-7c19g",
+        "visitorId": "vis-5tsd6g4q-mvtq10x5",
+        "sender": "visitor",
+        "senderName": "ELON MUSK",
+        "text": "Telemetry check",
+        "message": "Telemetry check",
+        "name": "ELON MUSK",
+        "city": "TEXAS",
+        "timestamp": 1793346718336,
+        "timeString": "07:51 AM",
+        "read": false,
+        "isElon": false,
+        "isAdmin": false,
+        "isSystem": false,
+        "isVerified": true
+      }
+    ]
+  }
 }

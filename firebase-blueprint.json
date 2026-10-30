@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "JoinRequest": {
+      "title": "JoinRequest",
+      "description": "Space join request submitted by visitor",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "declined"]
+        }
+      },
+      "required": ["id", "name", "location", "status"]
+    },
+    "ActiveChat": {
+      "title": "ActiveChat",
+      "description": "Active approved 2-way chat channel with messages array",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "lastMessage": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "array",
+          "description": "List of message objects in chat"
+        }
+      },
+      "required": ["id", "name", "location"]
+    }
+  },
+  "firestore": {
+    "/joinRequests/{requestId}": {
+      "schema": "JoinRequest",
+      "description": "Pending and reviewed space join requests"
+    },
+    "/activeChats/{chatId}": {
+      "schema": "ActiveChat",
+      "description": "Active approved chat rooms and messages"
+    }
+  }
+}

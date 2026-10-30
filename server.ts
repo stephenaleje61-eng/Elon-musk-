@@ -566,15 +566,39 @@ app.post('/api/chat/presence', (req, res) => {
   res.json({ success: true, presence: currentAdminPresence });
 });
 
-// DELETE /api/chat/messages - Owner clear a visitor's private thread
+// DELETE /api/chat/conversations/:visitorId - Manual permanent deletion by Admin
+app.delete('/api/chat/conversations/:visitorId', (req, res) => {
+  const { visitorId } = req.params;
+  if (!visitorId) {
+    res.status(400).json({ error: 'visitorId is required' });
+    return;
+  }
+  delete visitorsStore[visitorId];
+  delete privateMessagesStore[visitorId];
+  persistPrivateData();
+  broadcastToClients({ type: 'conversation_deleted', visitorId });
+  res.json({ success: true, message: 'Conversation permanently deleted by admin' });
+});
+
+// DELETE /api/requests/:visitorId - Manual permanent deletion of space request by Admin
+app.delete('/api/requests/:visitorId', (req, res) => {
+  const { visitorId } = req.params;
+  if (!visitorId) {
+    res.status(400).json({ error: 'visitorId is required' });
+    return;
+  }
+  delete friendRequestsStore[visitorId];
+  persistPrivateData();
+  broadcastToClients({ type: 'request_deleted', visitorId });
+  res.json({ success: true, message: 'Request permanently deleted by admin' });
+});
+
+// DELETE /api/chat/messages - Legacy clear
 app.delete('/api/chat/messages', (req, res) => {
   const visitorId = req.query.visitorId ? String(req.query.visitorId) : req.query.userId ? String(req.query.userId) : null;
-  if (visitorId && privateMessagesStore[visitorId]) {
-    privateMessagesStore[visitorId] = [];
-    if (visitorsStore[visitorId]) {
-      visitorsStore[visitorId].lastMessage = 'Thread cleared';
-      visitorsStore[visitorId].unreadCount = 0;
-    }
+  if (visitorId) {
+    delete visitorsStore[visitorId];
+    delete privateMessagesStore[visitorId];
     persistPrivateData();
     broadcastToClients({ type: 'cleared', visitorId, userId: visitorId }, visitorId);
   }

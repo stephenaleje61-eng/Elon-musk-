@@ -1,20 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { ElonMuskSpaceVisitorView } from './components/ElonMuskSpaceVisitorView';
 import { ElonMuskSpaceAdminView } from './components/ElonMuskSpaceAdminView';
+import { ElonMuskSpaceAdminLogin } from './components/ElonMuskSpaceAdminLogin';
+import {
+  isCurrentAdminAuthenticated,
+  subscribeToAdminAuthState,
+} from './services/firebaseAuth';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return window.location.pathname;
+      const search = new URLSearchParams(window.location.search);
+      if (search.get('view') === 'admin' || search.get('page') === 'admin-login') {
+        return '/admin-login';
+      }
+      if (search.get('view') === 'visitor') {
+        return '/';
+      }
+      return window.location.pathname || '/';
     }
     return '/';
   });
 
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => isCurrentAdminAuthenticated());
+
+  // Listen to live Admin auth state changes
+  useEffect(() => {
+    const unsub = subscribeToAdminAuthState((authenticated) => {
+      setIsAdmin(authenticated);
+    });
+    return () => unsub();
+  }, []);
+
   const [visitorId] = useState<string>(() => {
     try {
-      const saved = localStorage.getItem('elonverse_visitor_id');
+      if (typeof window !== 'undefined') {
+        const urlId = new URLSearchParams(window.location.search).get('id');
+        if (urlId && urlId.trim()) {
+          localStorage.setItem('elonverse_visitor_id', urlId.trim());
+          return urlId.trim();
+        }
+      }
+      const saved =
+        localStorage.getItem('elonverse_visitor_id') ||
+        localStorage.getItem('elon_space_visitor_id');
       if (saved) return saved;
-      const created = 'vis-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36);
+      const created =
+        'vis-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36);
       localStorage.setItem('elonverse_visitor_id', created);
       return created;
     } catch {
@@ -38,20 +70,41 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 1. Admin Control View (/admin, /owner, /space-owner) - OPENS DIRECTLY, NO LOGIN
-  if (currentRoute === '/admin' || currentRoute === '/owner' || currentRoute === '/space-owner') {
+  // 1. Admin Login Route (/admin-login) - displays email and password form for elonmuskspace241@gmail.com
+  if (currentRoute === '/admin-login') {
     return (
-      <ElonMuskSpaceAdminView
+      <ElonMuskSpaceAdminLogin
+        onLoginSuccess={() => navigateTo('/admin')}
         onBackToVisitor={() => navigateTo('/')}
       />
     );
   }
 
-  // 2. Default Visitor View (/) - Pure Black and White Form & Private Chat
+  // 2. Admin Control View (/admin, /owner, /space-owner) - LOCKED & PROTECTED
+  if (currentRoute === '/admin' || currentRoute === '/owner' || currentRoute === '/space-owner') {
+    if (!isAdmin) {
+      // Task 4: If user tries to open /admin directly without login, redirect to /admin-login
+      return (
+        <ElonMuskSpaceAdminLogin
+          onLoginSuccess={() => navigateTo('/admin')}
+          onBackToVisitor={() => navigateTo('/')}
+        />
+      );
+    }
+
+    return (
+      <ElonMuskSpaceAdminView
+        onBackToVisitor={() => navigateTo('/')}
+        onLogout={() => navigateTo('/admin-login')}
+      />
+    );
+  }
+
+  // 3. Default Visitor View (/) - Normal Clean Visitor Space
   return (
     <ElonMuskSpaceVisitorView
       visitorId={visitorId}
-      onNavigateAdmin={() => navigateTo('/admin')}
+      onNavigateAdmin={() => navigateTo('/admin-login')}
     />
   );
 }
