@@ -128,7 +128,12 @@ export const StarlinkSection: React.FC<StarlinkSectionProps> = ({
                   <img
                     src={kit.image}
                     alt={kit.name}
+                    style={{ width: '100%' }}
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1544725121-be3bf52e2dc8?w=800';
+                    }}
                     className="max-h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

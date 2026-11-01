@@ -24,6 +24,8 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   }
 }
 app.use('/uploads', express.static(path.resolve(__dirname, 'public', 'uploads')));
+app.use('/images', express.static(path.resolve(__dirname, 'public', 'images')));
+app.use(express.static(path.resolve(__dirname, 'public')));
 
 // Initialize Google GenAI client if GEMINI_API_KEY is available
 let ai: GoogleGenAI | null = null;

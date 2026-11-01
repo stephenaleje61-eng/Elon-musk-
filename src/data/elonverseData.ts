@@ -24,9 +24,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '4.8s 0-60',
     drivetrain: 'AWD Dual Motor',
     deliveryEstimate: '2-5 weeks',
-    image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+    image: '/images/tesla_model_y.jpg',
     gallery: [
-      '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+      '/images/tesla_model_y.jpg',
     ],
     description: 'The world’s best-selling passenger vehicle. Engineered with 5-star safety ratings, expansive 76 cu ft cargo capacity, all-weather Dual Motor AWD, and standard Autopilot HW4.',
     specs: {
@@ -50,9 +50,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '5.8s 0-60 (2.9s Performance)',
     drivetrain: 'RWD / AWD Dual Motor',
     deliveryEstimate: '1-3 weeks',
-    image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+    image: '/images/tesla_model_3.jpg',
     gallery: [
-      '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+      '/images/tesla_model_3.jpg',
     ],
     description: 'Upgraded with 360-degree acoustic glass, ventilated front seating, an 8-inch rear passenger touchscreen, and enhanced suspension for whisper-quiet long distance cruising.',
     specs: {
@@ -76,9 +76,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '3.1s 0-60 (1.99s Plaid)',
     drivetrain: 'Dual Motor AWD / Plaid Tri-Motor',
     deliveryEstimate: '2-4 weeks',
-    image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+    image: '/images/tesla_model_s.jpg',
     gallery: [
-      '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+      '/images/tesla_model_s.jpg',
     ],
     description: 'Unmatched acceleration, endurance, and refinement. Model S Plaid generates 1,020 peak horsepower with carbon-sleeved rotors and sustained high-speed thermal management.',
     specs: {
@@ -102,9 +102,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '3.8s 0-60 (2.5s Plaid)',
     drivetrain: 'Falcon Doors AWD / Plaid Tri-Motor',
     deliveryEstimate: '2-6 weeks',
-    image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+    image: '/images/tesla_model_x.jpg',
     gallery: [
-      '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+      '/images/tesla_model_x.jpg',
     ],
     description: 'The pinnacle of electric SUV engineering. Featuring dual Falcon Wing doors for effortless cabin entry, panoramic windshield, up to 5,000 lbs towing, and seating for up to seven.',
     specs: {
@@ -128,9 +128,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '2.6s 0-60 (Cyberbeast)',
     drivetrain: 'Tri-Motor Cyberbeast / All-Wheel Drive',
     deliveryEstimate: '2-4 weeks',
-    image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+    image: '/images/tesla_cybertruck.jpg',
     gallery: [
-      '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+      '/images/tesla_cybertruck.jpg',
     ],
     description: 'Built for any planet. Exoskeleton made of cold-rolled stainless steel, shatter-resistant Armor Glass, steer-by-wire 4-wheel steering, and bi-directional Powershare to power your home.',
     specs: {
@@ -154,9 +154,9 @@ export const VEHICLES: Vehicle[] = [
     acceleration: '20s 0-60 fully loaded (5s bobtail)',
     drivetrain: 'Tri-Independent Electric Drive Units',
     deliveryEstimate: 'Commercial Fleet Reservations',
-    image: '/src/assets/images/tesla_semi_truck_1793541723653.jpg',
+    image: '/images/tesla_semi.jpg',
     gallery: [
-      '/src/assets/images/tesla_semi_truck_1793541723653.jpg',
+      '/images/tesla_semi.jpg',
     ],
     description: 'The future of trucking. Consumes under 2 kWh per mile under full load, recovers 70% range in 30 minutes on Megawatt chargers, and delivers estimated $200,000 in fuel savings over 3 years.',
     specs: {
@@ -179,7 +179,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'High-speed home EV charging at up to 44 miles of range per hour.',
     nigerianBenefit: 'Compatible with all Tesla models and home residential breaker panels.',
     capacity: '48A / 11.5 kW output',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_powerwall.jpg',
     description: 'The most convenient way to charge at home. Equipped with Wi-Fi connectivity for over-the-air firmware updates, power sharing across up to 6 units, and 24-foot cable length.',
     specs: {
       voltage: '208-240V AC Single Phase',
@@ -198,7 +198,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Charge any electric vehicle in North America (NACS + J1772 integrated adapter).',
     nigerianBenefit: 'Integrated Magic Dock adapter automatically unlocks for non-Tesla EVs.',
     capacity: '48A / 11.5 kW output',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_powerwall.jpg',
     description: 'Award-winning universal EV charger. Charges Tesla vehicles with native NACS connector, and non-Tesla EVs via built-in J1772 adapter with no separate loose dongles required.',
     specs: {
       compatibility: 'Tesla NACS + all J1772 Electric Vehicles',
@@ -216,7 +216,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Portable travel charging kit with standard household 120V & 240V adapters.',
     nigerianBenefit: 'Essential companion for road trips and emergency wall outlet charging.',
     capacity: 'Up to 32A / 7.7 kW',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_powerwall.jpg',
     description: 'Compact travel kit includes the mobile connector, standard 120V NEMA 5-15 adapter, and a durable zippered storage bag. Add optional NEMA 14-50 adapter for fast 240V charging.',
     specs: {
       cableLength: '20 feet (6 m)',
@@ -233,7 +233,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Integrated solar inverter + 13.5 kWh battery storage for whole-home backup.',
     nigerianBenefit: 'Sub-second switchover (<10ms) during blackout. Keeps AC, water pump, and appliances uninterrupted.',
     capacity: '13.5 kWh storage · 11.5 kW continuous power',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_powerwall.jpg',
     description: 'Fully integrated next-generation residential energy storage system with built-in solar inverter supporting up to six solar inputs. Automatically recharges from solar during daylight and powers home throughout nighttime blackouts.',
     specs: {
       energyCapacity: '13.5 kWh',
@@ -251,7 +251,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Architectural active solar glass tiles that replace traditional roofing material.',
     nigerianBenefit: 'Seamless aesthetic that powers your home cleanly while withstanding 130 mph winds and hail.',
     capacity: 'Custom sized from 8 kW to 30 kW',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_solar_roof.jpg',
     description: 'Custom glass solar tiles and architectural steel tiles form an impervious roof barrier that generates clean electricity from sunrise to sunset. 3x stronger than standard asphalt shingles.',
     specs: {
       warranty: '25-Year Tile & Power Output Warranty',
@@ -268,7 +268,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Low-profile monocrystalline solar panels with invisible mounting hardware.',
     nigerianBenefit: 'Generates maximum energy per square foot on existing roofs.',
     capacity: '4.8 kW to 19.2 kW residential packages',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_solar_roof.jpg',
     description: 'Sleek all-black design with integrated front skirts and no visible mounting rails. Connects directly to Powerwall 3 or central inverter to reduce electricity bills by up to 90%.',
     specs: {
       efficiency: 'High-efficiency monocrystalline silicon cells',
@@ -285,7 +285,7 @@ export const TESLA_TECH_ENERGY: EnergyProduct[] = [
     subtitle: 'Commercial & utility-scale battery energy storage for grid stabilization.',
     nigerianBenefit: 'Ideal for industrial factories, manufacturing hubs, and regional microgrids.',
     capacity: '3.9 MWh per shipping-container unit',
-    image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+    image: '/images/tesla_megapack.jpg',
     description: 'Pre-assembled, turnkey energy storage container including battery modules, bi-directional inverters, thermal liquid cooling, and Tesla Autobidder trading software for grid operators.',
     specs: {
       energyCapacity: '3.9 MWh per unit',
@@ -308,7 +308,7 @@ export const SPACEX_PRODUCTS: SpaceProduct[] = [
     type: 'starship',
     seats: 100,
     nextLaunch: 'Flight 7 Preparations',
-    image: '/src/assets/images/spacex_starship_launch_1793126082661.jpg',
+    image: '/images/spacex_starship_launch_1793126082661.jpg',
     description: 'The most powerful launch vehicle ever developed, producing 16.7 million lbs of thrust with 33 Raptor 3 engines. Designed for 100% full reusability with orbital refueling and precision tower catching via Mechazilla chopsticks.',
     specs: {
       height: '121 m (397 ft)',
@@ -328,7 +328,7 @@ export const SPACEX_PRODUCTS: SpaceProduct[] = [
     priceNote: 'Dedicated launch: $69.75M · Smallsat Rideshare: from $300k',
     type: 'falcon9',
     nextLaunch: 'Launches Every 2.5 Days',
-    image: '/src/assets/images/spacex_starship_launch_1793126082661.jpg',
+    image: '/images/falcon_heavy.jpg',
     description: 'With over 350+ successful orbital missions, Falcon 9 has revolutionized access to space. Individual first-stage boosters have completed up to 25+ consecutive flights with drone-ship ocean landings.',
     specs: {
       height: '70 m (229.6 ft)',
@@ -347,7 +347,7 @@ export const SPACEX_PRODUCTS: SpaceProduct[] = [
     priceNote: 'Standard commercial payload configuration',
     type: 'heavy',
     nextLaunch: 'Upcoming Deep Space & Geostationary Missions',
-    image: '/src/assets/images/falcon_heavy_launch_1793541724184.jpg',
+    image: '/images/falcon_heavy.jpg',
     description: 'Composed of three Falcon 9 nine-engine cores for a total of 27 Merlin engines generating over 5 million lbs of thrust. Capable of lifting 63.8 metric tons to Low Earth Orbit and injecting heavy payloads directly into Mars or Jupiter transfer orbits.',
     specs: {
       height: '70 m (229.6 ft)',
@@ -368,7 +368,7 @@ export const SPACEX_PRODUCTS: SpaceProduct[] = [
     type: 'dragon',
     seats: 7,
     nextLaunch: 'NASA Crew & Private Commercial Axiom Flights',
-    image: '/src/assets/images/spacex_starship_launch_1793126082661.jpg',
+    image: '/images/spacex_starship_launch_1793126082661.jpg',
     description: 'Capable of carrying up to 7 passengers to Earth orbit, the International Space Station, and private orbital research platforms. Features full autonomous docking, SuperDraco emergency abort thrusters, and PICA-X heat shield.',
     specs: {
       height: '8.1 m (26.7 ft)',
@@ -392,7 +392,7 @@ export const STARLINK_PRODUCTS: StarlinkProduct[] = [
     tagline: 'High-Speed, Low-Latency Satellite Internet for Homes & Small Businesses',
     speed: '150 - 250+ Mbps',
     latency: '25 - 40 ms',
-    image: '/src/assets/images/starlink_mini_dish_1793541724994.jpg',
+    image: '/images/starlink_residential.jpg',
     features: [
       'Self-aligning phased array antenna with electronic beam steering',
       'Integrated Wi-Fi 6 router with Tri-Band mesh expansion capability',
@@ -412,7 +412,7 @@ export const STARLINK_PRODUCTS: StarlinkProduct[] = [
     tagline: 'Compact, Backpack-Ready High-Speed Internet Powered by USB-C',
     speed: '100 - 180 Mbps',
     latency: '28 - 45 ms',
-    image: '/src/assets/images/starlink_mini_dish_1793541724994.jpg',
+    image: '/images/starlink_mini_dish.jpg',
     features: [
       'Weighs only 1.1 kg (2.4 lbs) and fits comfortably inside a daypack',
       'Built-in Wi-Fi 5 router directly inside the dish body',
@@ -432,7 +432,7 @@ export const STARLINK_PRODUCTS: StarlinkProduct[] = [
     tagline: 'Connect Anywhere in the World While in Motion on Land, Sea, or Air',
     speed: '220 - 350 Mbps',
     latency: '25 - 35 ms',
-    image: '/src/assets/images/starlink_mini_dish_1793541724994.jpg',
+    image: '/images/starlink_roam.jpg',
     features: [
       'Permanent wedge mount for vehicles, yachts, RVs, and commercial fleets',
       '140° field of view sees more satellites even at low horizon angles',

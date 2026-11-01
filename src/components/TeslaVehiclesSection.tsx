@@ -115,7 +115,12 @@ export const TeslaVehiclesSection: React.FC<TeslaVehiclesSectionProps> = ({
                   <img
                     src={car.image}
                     alt={car.name}
+                    style={{ width: '100%' }}
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800';
+                    }}
                     className="max-h-full w-full object-contain filter contrast-105 group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[10px] text-[#AAB7CC] border border-[#1A2A4A]">

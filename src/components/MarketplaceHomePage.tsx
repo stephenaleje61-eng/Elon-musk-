@@ -60,7 +60,7 @@ export const MarketplaceHomePage: React.FC<MarketplaceHomePageProps> = ({
         quantity: 1,
         category: 'vehicles',
         currency: 'USD',
-        image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+        image: '/images/tesla_model_y.jpg',
       },
       {
         id: 'cart-starlink-mini',
@@ -71,7 +71,7 @@ export const MarketplaceHomePage: React.FC<MarketplaceHomePageProps> = ({
         quantity: 1,
         category: 'internet',
         currency: 'USD',
-        image: '/src/assets/images/starlink_mini_dish_1793541724994.jpg',
+        image: '/images/starlink_mini_dish.jpg',
       },
       {
         id: 'cart-powerwall-3',
@@ -81,7 +81,7 @@ export const MarketplaceHomePage: React.FC<MarketplaceHomePageProps> = ({
         quantity: 1,
         category: 'energy',
         currency: 'USD',
-        image: '/src/assets/images/tesla_powerwall_home_1793541724982.jpg',
+        image: '/images/tesla_powerwall.jpg',
       },
     ];
   });
@@ -98,7 +98,7 @@ export const MarketplaceHomePage: React.FC<MarketplaceHomePageProps> = ({
         title: 'Tesla Cybertruck (Cyberbeast)',
         category: 'vehicles',
         price: 79990,
-        image: '/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg',
+        image: '/images/tesla_cybertruck.jpg',
         dateAdded: 'Today',
       },
       {
@@ -106,7 +106,7 @@ export const MarketplaceHomePage: React.FC<MarketplaceHomePageProps> = ({
         title: 'SpaceX Falcon Heavy Commercial Launch',
         category: 'space',
         price: 97000000,
-        image: '/src/assets/images/falcon_heavy_launch_1793541724184.jpg',
+        image: '/images/falcon_heavy.jpg',
         dateAdded: 'Today',
       },
     ];
