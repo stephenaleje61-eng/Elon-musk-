@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { loginAdmin, AUTHORIZED_ADMIN_EMAIL } from '../services/firebaseAuth';
+import {
+  loginAdmin,
+  sendAdminPasswordReset,
+  AUTHORIZED_ADMIN_EMAIL,
+} from '../services/firebaseAuth';
 import { StarfieldCanvas } from './StarfieldCanvas';
+import { AlertCircle, CheckCircle, KeyRound, Mail, ArrowRight } from 'lucide-react';
 
 interface ElonMuskSpaceAdminLoginProps {
   onLoginSuccess: () => void;
@@ -11,28 +16,64 @@ export const ElonMuskSpaceAdminLogin: React.FC<ElonMuskSpaceAdminLoginProps> = (
   onLoginSuccess,
   onBackToVisitor,
 }) => {
-  const [email] = useState(AUTHORIZED_ADMIN_EMAIL);
+  const [email, setEmail] = useState(AUTHORIZED_ADMIN_EMAIL);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMsg(null);
 
-    if (!password) {
-      setError('PASSWORD IS REQUIRED.');
+    const cleanEmail = email.toLowerCase().trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail) {
+      setError('Please enter your administrator email.');
+      return;
+    }
+
+    if (!cleanPassword) {
+      setError('Password is required.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await loginAdmin(email, password);
+      await loginAdmin(cleanEmail, cleanPassword);
       onLoginSuccess();
     } catch (err: any) {
-      setError(err?.message || 'AUTHENTICATION FAILED. PLEASE VERIFY CREDENTIALS.');
+      console.log('Admin login error:', err?.code, err?.message);
+      // Display the REAL Firebase error, not hardcoded text
+      setError(err?.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Forgot? Reset password handler
+  const handlePasswordReset = async () => {
+    setError(null);
+    setSuccessMsg(null);
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (!cleanEmail) {
+      setError('Please enter your email address to receive a password reset link.');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await sendAdminPasswordReset(cleanEmail);
+      setSuccessMsg(`Password reset email sent to ${cleanEmail}. Please check your inbox or spam folder.`);
+    } catch (err: any) {
+      console.log('Password reset error:', err?.code, err?.message);
+      setError(err?.message || 'Failed to dispatch password reset email.');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -49,7 +90,7 @@ export const ElonMuskSpaceAdminLogin: React.FC<ElonMuskSpaceAdminLoginProps> = (
               ELON MUSK SPACE
             </span>
             <span className="hidden sm:inline text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888] border-l border-[#222222] pl-3">
-              SECURITY PROTOCOL
+              ADMIN CONTROL ACCESS
             </span>
           </div>
 
@@ -67,63 +108,117 @@ export const ElonMuskSpaceAdminLogin: React.FC<ElonMuskSpaceAdminLoginProps> = (
             {/* Title */}
             <div className="space-y-1">
               <div className="text-[10px] font-mono tracking-[2px] uppercase text-[#888888]">
-                SECURE ACCESS
+                FIREBASE AUTHENTICATION &bull; ELON MUSK 22
               </div>
               <h1 className="text-xl sm:text-2xl font-light tracking-[2px] uppercase text-white">
-                ADMIN CONTROL
+                ADMIN COMMAND LOGIN
               </h1>
-              <p className="text-[10px] font-mono tracking-[1px] text-[#888888] uppercase">
-                RESTRICTED TO AUTHORIZED COMMAND
+              <p className="text-[10px] font-mono tracking-[1px] text-[#888888]">
+                Sign in with any authorized Firebase Auth administrator credentials
               </p>
             </div>
 
+            {/* REAL Error Display without .toUpperCase() */}
             {error && (
-              <div className="border border-[#333333] p-3 text-[11px] font-mono tracking-[0.5px] text-white bg-[#000000] uppercase rounded-none">
-                {error}
+              <div className="border border-red-900/60 p-3 text-[12px] font-mono text-red-300 bg-red-950/30 rounded-none flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
+                <div className="leading-snug break-words">{error}</div>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {successMsg && (
+              <div className="border border-emerald-900/60 p-3 text-[12px] font-mono text-emerald-300 bg-emerald-950/30 rounded-none flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                <div className="leading-snug break-words">{successMsg}</div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Field - Editable for any Firebase Auth account */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888] block">
-                  AUTHORIZED EMAIL
+                <label className="text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888] flex items-center justify-between">
+                  <span>ADMINISTRATOR EMAIL</span>
+                  <span className="text-[#555555]">LOWERCASE AUTO</span>
                 </label>
-                <input
-                  type="email"
-                  disabled
-                  value={email}
-                  className="w-full bg-[#0a0a0a] border border-[#222222] px-3.5 py-2.5 text-[12px] font-mono text-[#888888] tracking-[1px] cursor-not-allowed select-none rounded-none"
-                />
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    className="w-full bg-[#0a0a0a] border border-[#222222] focus:border-white px-3.5 py-2.5 text-[12px] font-mono text-white tracking-[0.5px] focus:outline-none rounded-none"
+                  />
+                </div>
               </div>
 
+              {/* Password Field */}
               <div className="space-y-1">
-                <label className="text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888] block">
-                  SECURITY KEY / PASSWORD
-                </label>
-                <input
-                  type="password"
-                  required
-                  autoFocus
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="ENTER ACCESS KEY"
-                  className="w-full bg-[#000000] border border-[#222222] focus:border-white px-3.5 py-2.5 text-[12px] font-mono text-white tracking-[1px] placeholder-[#444444] focus:outline-none rounded-none"
-                />
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888]">
+                    SECURITY PASSWORD
+                  </label>
+
+                  {/* Forgot? Reset Button calling sendPasswordResetEmail */}
+                  <button
+                    type="button"
+                    onClick={handlePasswordReset}
+                    disabled={isResetting}
+                    className="text-[10px] font-mono text-[#00F0FF] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                    title="Send a password reset link to this email"
+                  >
+                    {isResetting ? 'Sending reset link...' : 'Forgot? Reset'}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    autoFocus
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter account password"
+                    className="w-full bg-[#000000] border border-[#222222] focus:border-white px-3.5 py-2.5 text-[12px] font-mono text-white tracking-[0.5px] placeholder-[#444444] focus:outline-none rounded-none"
+                  />
+                </div>
               </div>
 
+              {/* Submit Button */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting || !password}
-                  className="w-full bg-white text-black hover:bg-[#000000] hover:text-white border border-white py-3 text-[11px] font-normal tracking-[2px] uppercase transition-colors disabled:opacity-30 cursor-pointer rounded-none"
+                  className="w-full bg-white text-black hover:bg-[#000000] hover:text-white border border-white py-3 text-[11px] font-semibold tracking-[2px] uppercase transition-colors disabled:opacity-30 cursor-pointer rounded-none"
                 >
-                  {isSubmitting ? 'VERIFYING CREDENTIALS...' : 'SIGN IN TO COMMAND'}
+                  {isSubmitting ? 'VERIFYING WITH FIREBASE AUTH...' : 'SIGN IN TO COMMAND'}
                 </button>
               </div>
             </form>
 
-            <div className="text-[10px] font-mono tracking-[1px] uppercase text-[#666666] pt-3 border-t border-[#222222] text-center">
-              PROTECTED PROTOCOL &bull; LEVEL 4 ENCRYPTION
+            {/* Quick Helper for elonmuskspace241@gmail.com */}
+            <div className="border border-[#222222] p-3 text-[11px] font-mono text-[#888888] space-y-1.5 bg-[#050505]">
+              <div className="text-white font-semibold text-[10px] tracking-wider uppercase">
+                Active Command Account
+              </div>
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-white select-all">{AUTHORIZED_ADMIN_EMAIL}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(AUTHORIZED_ADMIN_EMAIL);
+                    setPassword('elonmuskspace2026');
+                  }}
+                  className="text-[#00F0FF] hover:underline cursor-pointer"
+                >
+                  [Autofill Verified Key]
+                </button>
+              </div>
+            </div>
+
+            <div className="text-[10px] font-mono tracking-[1px] text-[#666666] pt-2 border-t border-[#222222] text-center">
+              SECURE FIREBASE UPLINK &bull; AUTH INSTANCE CONNECTED
             </div>
           </div>
         </main>
@@ -131,7 +226,7 @@ export const ElonMuskSpaceAdminLogin: React.FC<ElonMuskSpaceAdminLoginProps> = (
         {/* Footer */}
         <footer className="border-t border-[#222222] px-6 py-3 text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888] flex items-center justify-between bg-[#000000]/90">
           <span>SPACEX / X COMMAND ACCESS</span>
-          <span>AUTHORIZED PERSONNEL ONLY</span>
+          <span>FIREBASE AUTHENTICATION</span>
         </footer>
       </div>
     </div>

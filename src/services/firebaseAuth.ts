@@ -2,7 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
@@ -12,7 +12,7 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 
 export const AUTHORIZED_ADMIN_EMAIL = 'elonmuskspace241@gmail.com';
-const ADMIN_SESSION_KEY = 'elon_space_admin_session_v1';
+export const ADMIN_SESSION_KEY = 'elon_space_admin_session_v1';
 
 export function getFirebaseAuth(): Auth | null {
   try {
@@ -25,7 +25,7 @@ export function getFirebaseAuth(): Auth | null {
 }
 
 /**
- * Check if the user is currently authenticated as the single authorized administrator
+ * Check if an admin is currently authenticated in Firebase Auth or session
  */
 export function isCurrentAdminAuthenticated(): boolean {
   if (typeof window === 'undefined') return false;
@@ -33,9 +33,7 @@ export function isCurrentAdminAuthenticated(): boolean {
   // 1. Check Firebase Auth user if active
   const auth = getFirebaseAuth();
   if (auth && auth.currentUser) {
-    if (auth.currentUser.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
-      return true;
-    }
+    return true;
   }
 
   // 2. Check persistent admin session
@@ -44,7 +42,7 @@ export function isCurrentAdminAuthenticated(): boolean {
       sessionStorage.getItem(ADMIN_SESSION_KEY) || localStorage.getItem(ADMIN_SESSION_KEY);
     if (rawSession) {
       const parsed = JSON.parse(rawSession);
-      if (parsed && parsed.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+      if (parsed && parsed.email) {
         return true;
       }
     }
@@ -54,55 +52,99 @@ export function isCurrentAdminAuthenticated(): boolean {
 }
 
 /**
- * Log in admin strictly verifying the email is elonmuskspace241@gmail.com
+ * Get the currently authenticated admin's email
  */
-export async function loginAdmin(emailInput: string, passwordInput: string): Promise<void> {
-  const cleanEmail = emailInput.trim().toLowerCase();
+export function getCurrentAdminEmail(): string {
+  const auth = getFirebaseAuth();
+  if (auth?.currentUser?.email) {
+    return auth.currentUser.email.toLowerCase().trim();
+  }
+  try {
+    const rawSession =
+      sessionStorage.getItem(ADMIN_SESSION_KEY) || localStorage.getItem(ADMIN_SESSION_KEY);
+    if (rawSession) {
+      const parsed = JSON.parse(rawSession);
+      if (parsed?.email) return parsed.email.toLowerCase().trim();
+    }
+  } catch (e) {}
+  return AUTHORIZED_ADMIN_EMAIL;
+}
+
+/**
+ * Log in admin:
+ * - Convert email to lowercase BEFORE login: email.toLowerCase().trim()
+ * - Remove .toUpperCase() anywhere
+ * - Use signInWithEmailAndPassword(auth, email.toLowerCase().trim(), password.trim())
+ * - Show REAL Firebase error: console.log(error.code, error.message)
+ * - Allow any email that exists in Firebase Auth
+ */
+export async function loginAdmin(emailInput: string, passwordInput: string): Promise<User> {
+  const cleanEmail = emailInput.toLowerCase().trim();
   const cleanPassword = passwordInput.trim();
 
-  // Strict check: Only elonmuskspace241@gmail.com can log in as Admin
-  if (cleanEmail !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
-    throw new Error(`Access Denied: Only ${AUTHORIZED_ADMIN_EMAIL} is authorized to access Admin Control.`);
+  if (!cleanEmail) {
+    throw new Error('Email is required.');
   }
 
-  if (!cleanPassword || cleanPassword.length < 6) {
-    throw new Error('Password must be at least 6 characters.');
+  if (!cleanPassword) {
+    throw new Error('Password is required.');
   }
 
-  // Try Firebase Authentication
   const auth = getFirebaseAuth();
-  if (auth) {
-    try {
-      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-    } catch (err: any) {
-      // If the admin user has not been registered in Firebase Auth yet, automatically register them
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        try {
-          await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
-        } catch (createErr: any) {
-          if (createErr.code === 'auth/email-already-in-use') {
-            throw new Error('Incorrect password for ' + AUTHORIZED_ADMIN_EMAIL);
-          }
-          throw new Error(createErr.message || 'Firebase Authentication failed');
-        }
-      } else if (err.code === 'auth/wrong-password') {
-        throw new Error('Incorrect password for ' + AUTHORIZED_ADMIN_EMAIL);
-      } else {
-        throw new Error(err.message || 'Firebase Authentication failed');
-      }
-    }
+  if (!auth) {
+    throw new Error('Firebase Auth service not initialized.');
   }
 
-  // Set verified secure session
-  const sessionData = {
-    email: AUTHORIZED_ADMIN_EMAIL,
-    authenticatedAt: Date.now(),
-    token: 'admin_tok_' + Math.random().toString(36).substring(2, 10),
-  };
   try {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-    localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
-  } catch (e) {}
+    const cred = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+    console.log('Firebase Auth Success:', cred.user.email, cred.user.uid);
+
+    // Set verified secure session
+    const sessionData = {
+      email: cred.user.email || cleanEmail,
+      uid: cred.user.uid,
+      authenticatedAt: Date.now(),
+      token: 'admin_tok_' + Math.random().toString(36).substring(2, 10),
+    };
+    try {
+      sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
+      localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(sessionData));
+    } catch (e) {}
+
+    return cred.user;
+  } catch (error: any) {
+    console.log(error.code, error.message);
+    const code = error?.code || 'auth/unknown-error';
+    const msg = error?.message || 'Authentication failed';
+    throw new Error(`[${code}] ${msg}`);
+  }
+}
+
+/**
+ * Send password reset email:
+ * Calls sendPasswordResetEmail with lowercase trimmed email and logs exact Firebase error
+ */
+export async function sendAdminPasswordReset(emailInput: string): Promise<void> {
+  const cleanEmail = emailInput.toLowerCase().trim();
+
+  if (!cleanEmail) {
+    throw new Error('Please enter your email address to receive a password reset link.');
+  }
+
+  const auth = getFirebaseAuth();
+  if (!auth) {
+    throw new Error('Firebase Auth service not initialized.');
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, cleanEmail);
+    console.log('sendPasswordResetEmail success:', cleanEmail);
+  } catch (error: any) {
+    console.log(error.code, error.message);
+    const code = error?.code || 'auth/unknown-error';
+    const msg = error?.message || 'Failed to dispatch reset email';
+    throw new Error(`[${code}] ${msg}`);
+  }
 }
 
 /**
@@ -131,7 +173,8 @@ export function subscribeToAdminAuthState(
 
   // Immediate check
   const isAuth = isCurrentAdminAuthenticated();
-  callback(isAuth, isAuth ? AUTHORIZED_ADMIN_EMAIL : null);
+  const currentEmail = getCurrentAdminEmail();
+  callback(isAuth, isAuth ? currentEmail : null);
 
   const auth = getFirebaseAuth();
   let unsubFb: (() => void) | null = null;
@@ -139,12 +182,12 @@ export function subscribeToAdminAuthState(
     try {
       unsubFb = onAuthStateChanged(auth, (user: User | null) => {
         if (!isMounted) return;
-        if (user && user.email?.toLowerCase() === AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
-          callback(true, AUTHORIZED_ADMIN_EMAIL);
+        if (user && user.email) {
+          callback(true, user.email.toLowerCase().trim());
         } else {
           // Check session fallback
           const sessionAuth = isCurrentAdminAuthenticated();
-          callback(sessionAuth, sessionAuth ? AUTHORIZED_ADMIN_EMAIL : null);
+          callback(sessionAuth, sessionAuth ? getCurrentAdminEmail() : null);
         }
       });
     } catch (e) {}
@@ -153,7 +196,7 @@ export function subscribeToAdminAuthState(
   const handleStorage = (e: StorageEvent) => {
     if (e.key === ADMIN_SESSION_KEY && isMounted) {
       const sessionAuth = isCurrentAdminAuthenticated();
-      callback(sessionAuth, sessionAuth ? AUTHORIZED_ADMIN_EMAIL : null);
+      callback(sessionAuth, sessionAuth ? getCurrentAdminEmail() : null);
     }
   };
 

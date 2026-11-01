@@ -22,7 +22,7 @@ import {
   ConversationDoc,
   MessageDoc,
 } from '../services/firebaseChatSystem';
-import { logoutAdmin, AUTHORIZED_ADMIN_EMAIL } from '../services/firebaseAuth';
+import { logoutAdmin, AUTHORIZED_ADMIN_EMAIL, getCurrentAdminEmail } from '../services/firebaseAuth';
 import { StarfieldCanvas } from './StarfieldCanvas';
 import {
   ShieldAlert,
@@ -515,7 +515,7 @@ export const ElonMuskSpaceAdminView: React.FC<ElonMuskSpaceAdminViewProps> = ({
 
           <div className="flex items-center gap-3 text-[10px] font-mono tracking-[1.5px] uppercase text-[#888888]">
             <span className="select-all text-white font-mono hidden md:inline">
-              {AUTHORIZED_ADMIN_EMAIL}
+              {getCurrentAdminEmail()}
             </span>
             <span className="text-[#333333] hidden md:inline">|</span>
 
