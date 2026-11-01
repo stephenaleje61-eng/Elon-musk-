@@ -1,283 +1,217 @@
 import React, { useState } from 'react';
-import { EXPRAL_INVESTMENT_PLANS } from '../data/elonverseData';
+import { TrendingUp, ShieldAlert, ExternalLink, BarChart3, DollarSign, Building, FileText, CheckCircle2 } from 'lucide-react';
+import { TSLA_FINANCIAL_METRICS, EXPRAL_INVESTMENT_PLANS } from '../data/elonverseData';
 import { ExpralInvestmentPlan } from '../types';
-import { TrendingUp, ShieldAlert, ArrowRight, CheckCircle2, Sliders, PieChart, Info, DollarSign } from 'lucide-react';
 
 interface ExpralInvestmentSectionProps {
-  onSelectPlan: (plan: ExpralInvestmentPlan, customAmount: number) => void;
+  onSelectPlan?: (plan: ExpralInvestmentPlan, customAmount: number) => void;
+  onOpenMessageSupport?: (topic: string) => void;
 }
 
-export const ExpralInvestmentSection: React.FC<ExpralInvestmentSectionProps> = ({ onSelectPlan }) => {
+export const ExpralInvestmentSection: React.FC<ExpralInvestmentSectionProps> = ({
+  onSelectPlan,
+  onOpenMessageSupport,
+}) => {
   const [selectedPlanId, setSelectedPlanId] = useState<string>('expral-growth-portfolio');
   const [calcAmount, setCalcAmount] = useState<number>(10000);
   const [calcMonths, setCalcMonths] = useState<number>(12);
-  const [currencyMode, setCurrencyMode] = useState<'USD' | 'NGN'>('USD');
-  const [showDisclaimerDetails, setShowDisclaimerDetails] = useState<boolean>(false);
 
   const currentPlan = EXPRAL_INVESTMENT_PLANS.find((p) => p.id === selectedPlanId) || EXPRAL_INVESTMENT_PLANS[1];
 
-  // Calculations
   const rateApy = currentPlan.targetYieldApy / 100;
   const projectedInterestUSD = Math.round(calcAmount * (rateApy * (calcMonths / 12)));
   const totalReturnUSD = calcAmount + projectedInterestUSD;
-  const monthlyYieldUSD = Math.round(projectedInterestUSD / calcMonths);
-
-  // Exchange rate approximation for Nigerian Naira display (₦1,500 / $)
-  const NGN_RATE = 1500;
-  const formatMoney = (usdVal: number) => {
-    if (currencyMode === 'NGN') {
-      return `₦${(usdVal * NGN_RATE).toLocaleString()}`;
-    }
-    return `$${usdVal.toLocaleString()}`;
-  };
 
   return (
-    <section id="investments" className="py-20 px-4 max-w-7xl mx-auto scroll-mt-20">
+    <section id="investments" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Header */}
-      <div className="mb-10 text-left">
-        <div className="flex items-center gap-2 mb-2 text-xs font-mono text-emerald-400 uppercase tracking-widest">
-          <TrendingUp className="w-4 h-4" />
-          <span>Ecosystem Technology Syndicates</span>
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-[#1A2A4A]">
+        <div>
+          <span className="text-xs uppercase tracking-widest text-[#00F0FF] font-semibold">
+            Corporate Transparency & Capital Markets
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mt-1">
+            Investment & Financial Information
+          </h2>
+          <p className="text-sm text-[#AAB7CC] mt-1 max-w-2xl">
+            Verified public market disclosures for Tesla (NASDAQ: TSLA), ecosystem energy storage growth, and capital allocation principles.
+          </p>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-          Expral Investment Plans
-        </h2>
-        <p className="text-sm text-neutral-400 font-normal max-w-3xl">
-          Direct syndicated participation in physical infrastructure across Starlink ground nodes, Tesla commercial Megapack energy arbitrage, and xAI frontier supercomputing. No email or password login required.
-        </p>
+        <div className="mt-4 md:mt-0">
+          <a
+            href={TSLA_FINANCIAL_METRICS.secFilingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[#0A152A] border border-[#1A2A4A] hover:border-[#00F0FF] text-[#00F0FF] text-xs font-semibold transition-colors"
+          >
+            <span>Tesla Investor Relations</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
-      {/* 3 Tier Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-        {EXPRAL_INVESTMENT_PLANS.map((plan) => {
-          const isSelected = selectedPlanId === plan.id;
-          return (
-            <div
-              key={plan.id}
-              onClick={() => {
-                setSelectedPlanId(plan.id);
-                setCalcAmount(plan.minCapital * 2);
-                setCalcMonths(plan.durationMonths);
-              }}
-              className={`relative rounded-2xl p-6 transition-all cursor-pointer flex flex-col justify-between ${
-                isSelected
-                  ? 'bg-neutral-900 border-2 border-white shadow-2xl text-white'
-                  : 'bg-[#0d0d0d] border border-neutral-800 hover:border-neutral-700 text-neutral-300'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
-                    {plan.tier}
-                  </span>
-                  <span className={`text-[11px] font-mono px-2 py-0.5 rounded ${
-                    plan.riskRating === 'Moderate'
-                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/80'
-                      : plan.riskRating === 'High Growth'
-                      ? 'bg-sky-950 text-sky-400 border border-sky-800/80'
-                      : 'bg-purple-950 text-purple-400 border border-purple-800/80'
-                  }`}>
-                    {plan.riskRating}
-                  </span>
-                </div>
+      {/* TSLA Live-Style Financial Metrics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Market Cap</span>
+          <span className="text-lg font-bold font-mono text-white mt-0.5 block">{TSLA_FINANCIAL_METRICS.marketCap}</span>
+          <span className="text-[10px] text-[#00F0FF]">NASDAQ: {TSLA_FINANCIAL_METRICS.symbol}</span>
+        </div>
 
-                <h3 className="text-xl font-bold text-white mb-1">{plan.title}</h3>
-                <p className="text-xs text-neutral-400 mb-4">{plan.focusAsset}</p>
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Annual Revenue</span>
+          <span className="text-lg font-bold font-mono text-white mt-0.5 block">{TSLA_FINANCIAL_METRICS.annualRevenue.split(' ')[0]}</span>
+          <span className="text-[10px] text-[#AAB7CC]">FY 2024 Audited</span>
+        </div>
 
-                {/* Target APY Badge */}
-                <div className="p-3 rounded-xl bg-neutral-950/80 border border-neutral-800/80 mb-4">
-                  <div className="text-xs text-neutral-400 font-mono">TARGET YIELD (ANNUALIZED)</div>
-                  <div className="text-3xl font-extrabold font-mono text-emerald-400">
-                    {plan.targetYieldApy}% <span className="text-xs font-normal text-neutral-400">APY</span>
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Vehicle Deliveries</span>
+          <span className="text-lg font-bold font-mono text-white mt-0.5 block">{TSLA_FINANCIAL_METRICS.automotiveDeliveries.split(' ')[0]}</span>
+          <span className="text-[10px] text-[#00F0FF]">Global Record</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Energy Storage</span>
+          <span className="text-lg font-bold font-mono text-emerald-400 mt-0.5 block">{TSLA_FINANCIAL_METRICS.energyStorageDeployed.split(' ')[0]}</span>
+          <span className="text-[10px] text-emerald-400">+125% YoY Growth</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Free Cash Flow</span>
+          <span className="text-lg font-bold font-mono text-white mt-0.5 block">{TSLA_FINANCIAL_METRICS.freeCashFlow}</span>
+          <span className="text-[10px] text-[#AAB7CC]">Operating Cash</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A]">
+          <span className="text-[10px] text-[#AAB7CC] uppercase block">Cash & Equivalents</span>
+          <span className="text-lg font-bold font-mono text-white mt-0.5 block">{TSLA_FINANCIAL_METRICS.cashAndInvestments}</span>
+          <span className="text-[10px] text-[#00F0FF]">Fortress Balance Sheet</span>
+        </div>
+      </div>
+
+      {/* Syndicate Tech Infrastructure Plans */}
+      <div className="rounded-2xl bg-[#0A152A] border border-[#1A2A4A] p-6 lg:p-8 mb-8">
+        <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#1A2A4A]">
+          <div>
+            <h3 className="text-xl font-bold text-white">Technology Infrastructure Participation</h3>
+            <p className="text-xs text-[#AAB7CC] mt-0.5">
+              Explore how capital is deployed into physical Starlink ground nodes, commercial Megapack battery grids, and frontier compute capacity.
+            </p>
+          </div>
+          <span className="text-[10px] font-mono uppercase text-[#00F0FF] bg-[#050A14] px-2.5 py-1 rounded border border-[#1A2A4A]">
+            EDUCATIONAL & SYNDICATE MODEL
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          {EXPRAL_INVESTMENT_PLANS.map((plan) => {
+            const isSelected = selectedPlanId === plan.id;
+            return (
+              <div
+                key={plan.id}
+                onClick={() => {
+                  setSelectedPlanId(plan.id);
+                  setCalcAmount(plan.minCapital * 2);
+                  setCalcMonths(plan.durationMonths);
+                }}
+                className={`p-5 rounded-xl transition-all cursor-pointer flex flex-col justify-between ${
+                  isSelected
+                    ? 'bg-[#050A14] border-2 border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.2)]'
+                    : 'bg-[#050A14]/60 border border-[#1A2A4A] hover:border-[#1A2A4A]/90'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-mono text-[#00F0FF]">{plan.tier}</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#0A152A] border border-[#1A2A4A] text-white">
+                      {plan.riskRating}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-neutral-400 font-mono mt-0.5">
-                    Term: {plan.durationMonths} Months &middot; {plan.payoutFrequency}
+                  <h4 className="text-base font-bold text-white mb-1">{plan.title}</h4>
+                  <p className="text-xs text-[#AAB7CC] mb-3">{plan.focusAsset}</p>
+
+                  <div className="p-3 rounded-lg bg-[#0A152A] border border-[#1A2A4A] mb-3">
+                    <span className="text-[10px] text-[#AAB7CC] block uppercase">Target Annual Yield</span>
+                    <span className="text-2xl font-bold font-mono text-emerald-400">
+                      {plan.targetYieldApy}% <span className="text-xs font-normal text-[#AAB7CC]">APY</span>
+                    </span>
+                    <span className="text-[10px] text-[#AAB7CC] block mt-0.5">
+                      Min Capital: ${plan.minCapital.toLocaleString()} &middot; Term: {plan.durationMonths} Months
+                    </span>
                   </div>
                 </div>
 
-                <div className="text-xs text-neutral-300 mb-4 leading-relaxed">
-                  {plan.description}
-                </div>
-
-                <div className="space-y-2 mb-6">
-                  {plan.highlights.map((h, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-neutral-300">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>{h}</span>
-                    </div>
+                <ul className="space-y-1.5 text-xs text-[#AAB7CC] mt-2 mb-4">
+                  {plan.highlights.slice(0, 2).map((h, i) => (
+                    <li key={i} className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" />
+                      <span className="truncate">{h}</span>
+                    </li>
                   ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-xs font-mono text-neutral-400 mb-3 pt-3 border-t border-neutral-800/80 flex justify-between">
-                  <span>Entry Range:</span>
-                  <span className="text-white font-bold">
-                    ${plan.minCapital.toLocaleString()} - ${plan.maxCapital.toLocaleString()}
-                  </span>
-                </div>
+                </ul>
 
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelectPlan(plan, plan.minCapital);
+                    if (onSelectPlan) {
+                      onSelectPlan(plan, calcAmount);
+                    } else if (onOpenMessageSupport) {
+                      onOpenMessageSupport(`Inquiry regarding ${plan.title} capital deployment and yield schedule`);
+                    }
                   }}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors ${
-                    isSelected
-                      ? 'bg-white text-black hover:bg-neutral-200'
-                      : 'bg-neutral-800 text-white hover:bg-neutral-700'
-                  }`}
+                  className="w-full py-2 rounded-lg bg-[#00F0FF] text-[#050A14] font-bold text-xs hover:bg-[#00F0FF]/90 transition-all text-center"
                 >
-                  <span>Allocate to Plan</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Consult Syndicate Director
                 </button>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Interactive Yield Calculator */}
-      <div className="rounded-2xl bg-[#090909] border border-neutral-800 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-neutral-800 gap-3">
-          <div className="flex items-center gap-2 text-white font-bold text-lg">
-            <Sliders className="w-5 h-5 text-emerald-400" />
-            <span>Interactive Expral Yield Simulator &mdash; {currentPlan.title}</span>
-          </div>
-
-          <div className="flex items-center gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800 text-xs self-start sm:self-auto">
-            <button
-              onClick={() => setCurrencyMode('USD')}
-              className={`px-3 py-1 rounded font-mono font-medium transition-colors ${
-                currencyMode === 'USD' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              USD ($)
-            </button>
-            <button
-              onClick={() => setCurrencyMode('NGN')}
-              className={`px-3 py-1 rounded font-mono font-medium transition-colors ${
-                currencyMode === 'NGN' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              NGN (₦)
-            </button>
-          </div>
+            );
+          })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Controls */}
-          <div className="lg:col-span-7 space-y-6">
+        {/* Interactive Yield Calculator */}
+        <div className="p-5 rounded-xl bg-[#050A14] border border-[#1A2A4A]">
+          <h4 className="text-sm font-bold text-white mb-2">
+            Syndicate Yield Simulator &mdash; {currentPlan.title}
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
             <div>
-              <div className="flex justify-between text-xs text-neutral-300 font-mono mb-2">
-                <span>INVESTMENT CAPITAL:</span>
-                <span className="text-white text-sm font-bold">{formatMoney(calcAmount)}</span>
-              </div>
+              <label className="text-xs text-[#AAB7CC] block mb-1">
+                Allocated Capital: <span className="text-white font-mono font-bold">${calcAmount.toLocaleString()}</span>
+              </label>
               <input
                 type="range"
                 min={currentPlan.minCapital}
                 max={currentPlan.maxCapital}
-                step={currentPlan.minCapital >= 50000 ? 5000 : 500}
+                step={500}
                 value={calcAmount}
-                onChange={(e) => setCalcAmount(parseInt(e.target.value, 10))}
-                className="w-full accent-white h-2 bg-neutral-800 rounded-lg cursor-pointer"
+                onChange={(e) => setCalcAmount(Number(e.target.value))}
+                className="w-full accent-[#00F0FF]"
               />
-              <div className="flex justify-between text-[10px] text-neutral-500 font-mono mt-1">
-                <span>Min: {formatMoney(currentPlan.minCapital)}</span>
-                <span>Max: {formatMoney(currentPlan.maxCapital)}</span>
-              </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs text-neutral-300 font-mono mb-2">
-                <span>CONTRACT DURATION:</span>
-                <span className="text-white text-sm font-bold">{calcMonths} Months</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[6, 12, 24].map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setCalcMonths(m)}
-                    className={`py-2 text-xs font-mono rounded-lg border transition-colors ${
-                      calcMonths === m
-                        ? 'bg-neutral-800 border-white text-white font-bold'
-                        : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white'
-                    }`}
-                  >
-                    {m} Months
-                  </button>
-                ))}
-              </div>
+            <div className="text-center p-3 rounded-lg bg-[#0A152A] border border-[#1A2A4A]">
+              <span className="text-[10px] text-[#AAB7CC] uppercase block">Projected Yield</span>
+              <span className="text-xl font-bold font-mono text-[#00F0FF]">
+                +${projectedInterestUSD.toLocaleString()}
+              </span>
             </div>
 
-            {/* Asset Allocation Breakdown */}
-            <div>
-              <div className="text-xs font-mono text-neutral-400 mb-2 flex items-center gap-1.5">
-                <PieChart className="w-3.5 h-3.5" />
-                <span>SYNDICATED ASSET ALLOCATION</span>
-              </div>
-              <div className="space-y-1.5">
-                {currentPlan.allocationBreakdown.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs text-neutral-300 font-mono">
-                    <span className="text-neutral-400 truncate">{item.asset}</span>
-                    <span className="text-white font-semibold ml-2">{item.percentage}%</span>
-                  </div>
-                ))}
-              </div>
+            <div className="text-center p-3 rounded-lg bg-[#0A152A] border border-[#1A2A4A]">
+              <span className="text-[10px] text-[#AAB7CC] uppercase block">Total Value at Term</span>
+              <span className="text-xl font-bold font-mono text-emerald-400">
+                ${totalReturnUSD.toLocaleString()}
+              </span>
             </div>
-          </div>
-
-          {/* Results Summary Box */}
-          <div className="lg:col-span-5 rounded-xl bg-neutral-950 border border-neutral-800 p-6 flex flex-col justify-between">
-            <div>
-              <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider mb-1">
-                Projected Return Summary
-              </div>
-              <div className="text-xs text-neutral-500 font-mono mb-4">
-                At {currentPlan.targetYieldApy}% Annualized Yield
-              </div>
-
-              <div className="space-y-3.5 pb-4 border-b border-neutral-900 font-mono">
-                <div className="flex justify-between text-xs">
-                  <span className="text-neutral-400">Allocated Capital:</span>
-                  <span className="text-white font-bold">{formatMoney(calcAmount)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-neutral-400">Est. Monthly Distribution:</span>
-                  <span className="text-emerald-400 font-bold">{formatMoney(monthlyYieldUSD)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-neutral-400">Net Estimated Profit:</span>
-                  <span className="text-emerald-400 font-bold">+{formatMoney(projectedInterestUSD)}</span>
-                </div>
-              </div>
-
-              <div className="pt-4 mb-6">
-                <span className="text-xs text-neutral-400 block font-mono">TOTAL ESTIMATED MATURITY:</span>
-                <span className="text-3xl font-extrabold font-mono text-white tracking-tight">
-                  {formatMoney(totalReturnUSD)}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onSelectPlan(currentPlan, calcAmount)}
-              className="w-full py-3 bg-white text-black text-xs font-semibold rounded-lg hover:bg-neutral-200 transition-colors shadow-lg flex items-center justify-center gap-2"
-            >
-              <span>Add Allocation to Cart &mdash; {formatMoney(calcAmount)}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Mandatory Regulatory & Risk Disclosure matching guidelines */}
-      <div className="mt-6 p-4 rounded-xl bg-neutral-950/90 border border-neutral-800 text-left">
-        <div className="flex items-start gap-2.5">
-          <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <div className="text-[11px] text-neutral-400 leading-relaxed">
-            <strong className="text-neutral-200">Legal &amp; Regulatory Disclaimer:</strong> ELONVERSE provides informational and simulated technology syndicate modeling for exploratory purposes only. It is not an investment adviser, broker-dealer, or affiliated financial institution of Elon Musk, Tesla Inc., SpaceX, or xAI. Technology infrastructure operations and private offerings involve market risks, including the possible loss of principal capital. Always review verified regulatory prospectuses before deploying actual capital.
-          </div>
+      {/* Strict Compliance & Risk Disclaimer */}
+      <div className="p-4 rounded-xl bg-[#0A152A]/60 border border-[#1A2A4A] flex items-start gap-3 text-xs text-[#AAB7CC] leading-relaxed">
+        <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <strong className="text-white">Regulatory Disclosures & Disclaimers: </strong>
+          {TSLA_FINANCIAL_METRICS.disclaimer} All public equity trading in TSLA occurs exclusively through licensed, registered FINRA/SIPC brokerages and global stock exchanges. Historical metrics are derived from Form 10-K and 10-Q SEC filings.
         </div>
       </div>
     </section>

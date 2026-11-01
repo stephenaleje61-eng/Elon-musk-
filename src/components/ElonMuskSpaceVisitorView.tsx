@@ -153,7 +153,7 @@ export const ElonMuskSpaceVisitorView: React.FC<ElonMuskSpaceVisitorViewProps> =
         from: 'visitor',
         senderName: name.trim().toUpperCase() || 'VISITOR',
         text: textToSend,
-        imageUrl: imageToSend || undefined,
+        ...(imageToSend ? { imageUrl: imageToSend } : {}),
       });
     } catch (err) {
       console.error('Failed to send message:', err);

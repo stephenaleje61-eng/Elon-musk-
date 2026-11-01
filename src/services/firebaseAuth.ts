@@ -9,30 +9,19 @@ import {
   Auth,
 } from 'firebase/auth';
 
+import firebaseConfig from '../../firebase-applet-config.json';
+
 export const AUTHORIZED_ADMIN_EMAIL = 'elonmuskspace241@gmail.com';
 const ADMIN_SESSION_KEY = 'elon_space_admin_session_v1';
 
 export function getFirebaseAuth(): Auth | null {
-  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || localStorage.getItem('firebase_api_key');
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || localStorage.getItem('firebase_project_id');
-
-  if (apiKey && projectId && apiKey.trim() !== '' && projectId.trim() !== '') {
-    try {
-      const config = {
-        apiKey,
-        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
-        projectId,
-        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`,
-        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '1234567890',
-        appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:1234567890:web:abcdef',
-      };
-      const app = !getApps().length ? initializeApp(config) : getApps()[0];
-      return getAuth(app);
-    } catch (e) {
-      console.warn('Firebase Auth init fallback:', e);
-    }
+  try {
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+    return getAuth(app);
+  } catch (e) {
+    console.warn('Firebase Auth init fallback:', e);
+    return null;
   }
-  return null;
 }
 
 /**

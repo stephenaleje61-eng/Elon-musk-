@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MarketplaceHomePage } from './components/MarketplaceHomePage';
 import { ElonMuskSpaceVisitorView } from './components/ElonMuskSpaceVisitorView';
 import { ElonMuskSpaceAdminView } from './components/ElonMuskSpaceAdminView';
 import { ElonMuskSpaceAdminLogin } from './components/ElonMuskSpaceAdminLogin';
@@ -13,6 +14,9 @@ export default function App() {
       const search = new URLSearchParams(window.location.search);
       if (search.get('view') === 'admin' || search.get('page') === 'admin-login') {
         return '/admin-login';
+      }
+      if (search.get('view') === 'terminal' || search.get('page') === 'terminal') {
+        return '/terminal';
       }
       if (search.get('view') === 'visitor') {
         return '/';
@@ -54,6 +58,39 @@ export default function App() {
     }
   });
 
+  const [userName, setUserName] = useState<string>(() => {
+    try {
+      return (
+        localStorage.getItem('elon_space_visitor_name') ||
+        localStorage.getItem('elonverse_user_name') ||
+        'Explorer'
+      );
+    } catch {
+      return 'Explorer';
+    }
+  });
+
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    try {
+      return (
+        localStorage.getItem('elon_space_visitor_email') ||
+        localStorage.getItem('elonverse_user_email') ||
+        'explorer@elonmuskspace.com'
+      );
+    } catch {
+      return 'explorer@elonmuskspace.com';
+    }
+  });
+
+  const handleUpdateUser = (name: string, email: string) => {
+    setUserName(name);
+    setUserEmail(email);
+    try {
+      localStorage.setItem('elon_space_visitor_name', name);
+      localStorage.setItem('elon_space_visitor_email', email);
+    } catch {}
+  };
+
   // Handle browser back and forward navigation
   useEffect(() => {
     const handlePopState = () => {
@@ -83,7 +120,7 @@ export default function App() {
   // 2. Admin Control View (/admin, /owner, /space-owner) - LOCKED & PROTECTED
   if (currentRoute === '/admin' || currentRoute === '/owner' || currentRoute === '/space-owner') {
     if (!isAdmin) {
-      // Task 4: If user tries to open /admin directly without login, redirect to /admin-login
+      // If user tries to open /admin directly without login, redirect to /admin-login
       return (
         <ElonMuskSpaceAdminLogin
           onLoginSuccess={() => navigateTo('/admin')}
@@ -100,10 +137,23 @@ export default function App() {
     );
   }
 
-  // 3. Default Visitor View (/) - Normal Clean Visitor Space
+  // 3. Raw Terminal View (/terminal) - Optional raw SpaceX telemetry screen
+  if (currentRoute === '/terminal') {
+    return (
+      <ElonMuskSpaceVisitorView
+        visitorId={visitorId}
+        onNavigateAdmin={() => navigateTo('/admin-login')}
+      />
+    );
+  }
+
+  // 4. Default Visitor View (/) - Upgraded ELON MUSK SPACE Premium Technology Marketplace & Homepage
   return (
-    <ElonMuskSpaceVisitorView
+    <MarketplaceHomePage
       visitorId={visitorId}
+      userName={userName}
+      userEmail={userEmail}
+      onUpdateUser={handleUpdateUser}
       onNavigateAdmin={() => navigateTo('/admin-login')}
     />
   );

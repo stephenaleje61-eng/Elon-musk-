@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   setDoc,
+  addDoc,
   deleteDoc,
   onSnapshot,
   getDoc,
@@ -11,6 +12,7 @@ import {
   Firestore,
   updateDoc,
   arrayUnion,
+  serverTimestamp,
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -24,6 +26,32 @@ if (!getApps().length) {
 
 // CRITICAL: Bind to configured firestoreDatabaseId
 export const firestore: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+/**
+ * Remove all undefined values from an object before passing to Firestore
+ */
+export function cleanFirestorePayload<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => cleanFirestorePayload(item)) as any;
+  }
+  if (typeof obj === 'object') {
+    // Preserve Firestore sentinels (serverTimestamp, arrayUnion, etc.)
+    if ('_methodName' in (obj as any) || '_delegate' in (obj as any)) {
+      return obj;
+    }
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        result[key] = cleanFirestorePayload(value);
+      }
+    }
+    return result;
+  }
+  return obj;
+}
 
 export interface JoinRequestDoc {
   id: string;
@@ -44,6 +72,7 @@ export interface ChatMessageItem {
   date: string;
   time: string;
   imageUrl?: string;
+  type?: 'text' | 'image';
   timestamp: number;
 }
 
@@ -60,61 +89,107 @@ export interface ActiveChatDoc {
 
 /**
  * Seed initial permanent records (Rita from Australia, Elon Musk from Texas)
- * if Firestore collections are empty or missing them.
+ * in Firestore activeChats and joinRequests so they are immediately available.
  */
 export async function seedInitialFirestoreData() {
   try {
-    // 1. Seed Rita (Australia) in joinRequests if not exists
-    const ritaRef = doc(firestore, 'joinRequests', 'req-rita-australia');
-    const ritaSnap = await getDoc(ritaRef);
-    if (!ritaSnap.exists()) {
-      await setDoc(ritaRef, {
-        id: 'req-rita-australia',
-        name: 'RITA',
-        location: 'AUSTRALIA',
-        message: 'Requesting secure uplink with Elon Musk Space Starbase terminal.',
-        date: '10/30/2026',
-        status: 'pending',
+    const today = '10/30/2026';
+
+    // 1. Seed Rita (Australia) in activeChats collection
+    const ritaChatRef = doc(firestore, 'activeChats', 'req-rita-australia');
+    const ritaChatSnap = await getDoc(ritaChatRef);
+    if (!ritaChatSnap.exists()) {
+      const initRitaMsg: ChatMessageItem = {
+        id: 'msg-rita-seed-1',
+        from: 'admin',
+        senderName: 'ELON MUSK [ADMIN]',
+        text: 'Space transmission channel verified and accepted. Uplink established with Starbase, Texas.',
+        date: today,
+        time: '07:45 AM',
+        type: 'text',
         timestamp: Date.now() - 3600000,
-        email: 'rita.aus@space.net',
-      });
-      console.log('Seeded Rita (Australia) in joinRequests Firestore collection');
+      };
+
+      await setDoc(
+        ritaChatRef,
+        cleanFirestorePayload({
+          id: 'req-rita-australia',
+          name: 'RITA',
+          location: 'AUSTRALIA',
+          date: today,
+          lastMessage: initRitaMsg.text,
+          timestamp: Date.now() - 3600000,
+          email: 'rita.aus@space.net',
+          messages: [initRitaMsg],
+        })
+      );
+
+      // Subcollection entry
+      const ritaSubCol = collection(firestore, 'activeChats', 'req-rita-australia', 'messages');
+      await addDoc(
+        ritaSubCol,
+        cleanFirestorePayload({
+          id: initRitaMsg.id,
+          from: 'ELON MUSK [ADMIN]',
+          sender: 'admin',
+          text: initRitaMsg.text,
+          date: today,
+          time: '07:45 AM',
+          type: 'text',
+          timestamp: serverTimestamp(),
+        })
+      ).catch(() => {});
     }
 
     // 2. Seed Elon Musk (Texas) in activeChats if not exists
     const elonRef = doc(firestore, 'activeChats', 'chat-elon-musk-texas');
     const elonSnap = await getDoc(elonRef);
     if (!elonSnap.exists()) {
+      const elonMsg1: ChatMessageItem = {
+        id: 'msg-elon-seed-1',
+        from: 'admin',
+        senderName: 'ELON MUSK [ADMIN]',
+        text: 'Space transmission channel verified and accepted. Direct encrypted link established.',
+        date: '10/29/2026',
+        time: '04:54 PM',
+        timestamp: Date.now() - 7200000,
+      };
+      const elonMsg2: ChatMessageItem = {
+        id: 'msg-elon-seed-2',
+        from: 'visitor',
+        senderName: 'ELON MUSK',
+        text: 'Telemetry check',
+        date: today,
+        time: '07:51 AM',
+        timestamp: Date.now() - 3600000,
+      };
+
       await setDoc(elonRef, {
         id: 'chat-elon-musk-texas',
         name: 'ELON MUSK',
         location: 'TEXAS',
         date: '10/29/2026',
         lastMessage: 'Telemetry check',
-        timestamp: Date.now() - 7200000,
+        timestamp: Date.now() - 3600000,
         email: 'elonmuskspace241@gmail.com',
-        messages: [
-          {
-            id: 'msg-seed-1',
-            from: 'admin',
-            senderName: 'Elon Musk (Admin)',
-            text: 'Space transmission channel verified and accepted. Direct encrypted link established.',
-            date: '10/29/2026',
-            time: '04:54 PM',
-            timestamp: Date.now() - 7200000,
-          },
-          {
-            id: 'msg-seed-2',
-            from: 'visitor',
-            senderName: 'Elon Musk',
-            text: 'Telemetry check',
-            date: '10/30/2026',
-            time: '07:51 AM',
-            timestamp: Date.now() - 3600000,
-          },
-        ],
+        messages: [elonMsg1, elonMsg2],
       });
-      console.log('Seeded Elon Musk (Texas) in activeChats Firestore collection');
+    }
+
+    // 3. Seed pending join request for Rita (Australia) in joinRequests if not exists
+    const ritaReqRef = doc(firestore, 'joinRequests', 'req-rita-australia');
+    const ritaReqSnap = await getDoc(ritaReqRef);
+    if (!ritaReqSnap.exists() && !ritaChatSnap.exists()) {
+      await setDoc(ritaReqRef, {
+        id: 'req-rita-australia',
+        name: 'RITA',
+        location: 'AUSTRALIA',
+        message: 'Requesting secure uplink with Elon Musk Space Starbase terminal.',
+        date: today,
+        status: 'pending',
+        timestamp: Date.now() - 3600000,
+        email: 'rita.aus@space.net',
+      });
     }
   } catch (err) {
     console.warn('Initial Firestore seed check:', err);
@@ -195,38 +270,116 @@ export function subscribeToActiveChats(
 }
 
 /**
- * Real-time subscription to single active chat doc
+ * Real-time subscription to single active chat doc and its messages subcollection
+ * Combines parent doc messages array and activeChats/{chatId}/messages subcollection
  */
 export function subscribeToSingleActiveChat(
   chatId: string,
   onUpdate: (chat: ActiveChatDoc | null) => void
 ): () => void {
   const chatDocRef = doc(firestore, 'activeChats', chatId);
-  const unsubscribe = onSnapshot(
+  const messagesSubCol = collection(firestore, 'activeChats', chatId, 'messages');
+
+  let currentParentDoc: any = null;
+  let subColMessages: ChatMessageItem[] = [];
+
+  const mergeAndEmit = () => {
+    if (!currentParentDoc && subColMessages.length === 0) {
+      return;
+    }
+
+    const parentArrayMessages: ChatMessageItem[] = Array.isArray(currentParentDoc?.messages)
+      ? currentParentDoc.messages
+      : [];
+
+    // Combine both subcollection messages and parent array messages, deduplicating by id
+    const messageMap = new Map<string, ChatMessageItem>();
+
+    parentArrayMessages.forEach((m) => {
+      const key = m.id || `${m.timestamp}-${m.text}`;
+      messageMap.set(key, m);
+    });
+
+    subColMessages.forEach((m) => {
+      const key = m.id || `${m.timestamp}-${m.text}`;
+      messageMap.set(key, m);
+    });
+
+    const combinedMessages = Array.from(messageMap.values()).sort(
+      (a, b) => (a.timestamp || 0) - (b.timestamp || 0)
+    );
+
+    const docName =
+      currentParentDoc?.name || (chatId.toLowerCase().includes('rita') ? 'RITA' : 'VISITOR');
+    const docLoc =
+      currentParentDoc?.location ||
+      (chatId.toLowerCase().includes('australia') ? 'AUSTRALIA' : 'EARTH');
+
+    onUpdate({
+      id: chatId,
+      name: docName,
+      location: docLoc,
+      date: currentParentDoc?.date || '10/30/2026',
+      lastMessage:
+        combinedMessages[combinedMessages.length - 1]?.text ||
+        currentParentDoc?.lastMessage ||
+        '',
+      timestamp: currentParentDoc?.timestamp || Date.now(),
+      messages: combinedMessages,
+      email: currentParentDoc?.email || '',
+    });
+  };
+
+  // 1. Listen to parent doc
+  const unsubDoc = onSnapshot(
     chatDocRef,
     (docSnap) => {
-      if (!docSnap.exists()) {
-        onUpdate(null);
-        return;
+      if (docSnap.exists()) {
+        currentParentDoc = docSnap.data();
       }
-      const d = docSnap.data();
-      onUpdate({
-        id: docSnap.id,
-        name: d.name || 'CALLSIGN',
-        location: d.location || 'EARTH',
-        date: d.date || '10/30/2026',
-        lastMessage: d.lastMessage || '',
-        timestamp: d.timestamp || Date.now(),
-        messages: Array.isArray(d.messages) ? d.messages : [],
-        email: d.email || '',
-      });
+      mergeAndEmit();
     },
     (err) => {
-      console.error('Firestore subscribeToSingleActiveChat error:', err);
+      console.warn('subscribeToSingleActiveChat doc error:', err);
     }
   );
 
-  return unsubscribe;
+  // 2. Listen to subcollection "messages"
+  const unsubSubCol = onSnapshot(
+    messagesSubCol,
+    (snapshot) => {
+      const list: ChatMessageItem[] = [];
+      snapshot.forEach((snapItem) => {
+        const d = snapItem.data();
+        const isAdmin =
+          d.from === 'ELON MUSK [ADMIN]' ||
+          d.from === 'admin' ||
+          d.sender === 'admin' ||
+          d.isAdmin === true;
+        list.push({
+          id: snapItem.id,
+          from: isAdmin ? 'admin' : 'visitor',
+          senderName: d.from || d.senderName || (isAdmin ? 'ELON MUSK [ADMIN]' : 'Visitor'),
+          text: d.text || d.message || '',
+          date: d.date || '10/30/2026',
+          time: d.time || '12:00 PM',
+          imageUrl: d.imageUrl || undefined,
+          type: d.type || (d.imageUrl ? 'image' : 'text'),
+          timestamp: d.timestamp?.toMillis ? d.timestamp.toMillis() : d.timestamp || Date.now(),
+        });
+      });
+      subColMessages = list;
+      mergeAndEmit();
+    },
+    (err) => {
+      console.warn('subscribeToSingleActiveChat subCol error:', err);
+    }
+  );
+
+  return () => {
+    unsubDoc();
+    unsubSubCol();
+  };
 }
 
 /**
@@ -256,7 +409,7 @@ export async function submitJoinRequestToFirestore(data: {
 
   await setDoc(doc(firestore, 'joinRequests', id), docData);
 
-  // Also sync to server JSON storage
+  // Sync to server JSON storage
   try {
     await fetch('/api/requests', {
       method: 'POST',
@@ -286,7 +439,7 @@ export async function acceptAndOpenChatInFirestore(request: JoinRequestDoc): Pro
   const initialMessage: ChatMessageItem = {
     id: 'msg-' + Date.now(),
     from: 'admin',
-    senderName: 'Elon Musk (Admin)',
+    senderName: 'ELON MUSK [ADMIN]',
     text: 'Space transmission channel verified and accepted. Uplink established.',
     date: dateStr,
     time: timeStr,
@@ -304,13 +457,31 @@ export async function acceptAndOpenChatInFirestore(request: JoinRequestDoc): Pro
     email: request.email || '',
   };
 
-  // 1. Write to activeChats collection
-  await setDoc(doc(firestore, 'activeChats', chatId), newChatDoc);
+  // 1. Write to activeChats parent collection
+  await setDoc(doc(firestore, 'activeChats', chatId), cleanFirestorePayload(newChatDoc));
 
-  // 2. Delete from joinRequests collection
+  // 2. Write to subcollection activeChats/{chatId}/messages
+  try {
+    const subColRef = collection(firestore, 'activeChats', chatId, 'messages');
+    await addDoc(
+      subColRef,
+      cleanFirestorePayload({
+        id: initialMessage.id,
+        from: 'ELON MUSK [ADMIN]',
+        sender: 'admin',
+        text: initialMessage.text,
+        date: dateStr,
+        time: timeStr,
+        type: 'text',
+        timestamp: serverTimestamp(),
+      })
+    );
+  } catch (e) {}
+
+  // 3. Delete from joinRequests collection
   await deleteDoc(doc(firestore, 'joinRequests', request.id));
 
-  // 3. Sync to server backend
+  // 4. Sync to server backend
   try {
     await fetch(`/api/requests/${encodeURIComponent(request.id)}`, {
       method: 'PATCH',
@@ -327,10 +498,7 @@ export async function acceptAndOpenChatInFirestore(request: JoinRequestDoc): Pro
  * Deletes document from joinRequests collection.
  */
 export async function declineJoinRequestInFirestore(requestId: string): Promise<void> {
-  // 1. Delete from Firestore
   await deleteDoc(doc(firestore, 'joinRequests', requestId));
-
-  // 2. Delete from server backend
   try {
     await fetch(`/api/requests/${encodeURIComponent(requestId)}`, {
       method: 'DELETE',
@@ -340,7 +508,10 @@ export async function declineJoinRequestInFirestore(requestId: string): Promise<
 
 /**
  * Send chat message in activeChats:
- * Appends to messages array in activeChats/{chatId} doc and updates lastMessage.
+ * 1. Adds document to Firestore subcollection activeChats/{chatId}/messages with:
+ *    { from: "ELON MUSK [ADMIN]", text, timestamp: serverTimestamp(), date, time, type }
+ * 2. Updates parent document activeChats/{chatId} with lastMessage and arrayUnion
+ * 3. Syncs with backend for multi-tier redundancy
  */
 export async function sendChatMessageToFirestore(params: {
   chatId: string;
@@ -353,44 +524,72 @@ export async function sendChatMessageToFirestore(params: {
   const dateStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`;
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+  const senderLabel =
+    params.from === 'admin'
+      ? 'ELON MUSK [ADMIN]'
+      : params.senderName || 'VISITOR';
+
+  // Construct message item strictly WITHOUT any undefined properties
   const newMsg: ChatMessageItem = {
     id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
     from: params.from,
-    senderName: params.senderName || (params.from === 'admin' ? 'Elon Musk (Admin)' : 'Visitor'),
+    senderName: senderLabel,
     text: params.text || '',
     date: dateStr,
     time: timeStr,
-    imageUrl: params.imageUrl,
+    type: params.imageUrl ? 'image' : 'text',
     timestamp: Date.now(),
+    ...(params.imageUrl ? { imageUrl: params.imageUrl } : {}),
   };
 
   const chatDocRef = doc(firestore, 'activeChats', params.chatId);
-  const summary = params.text || (params.imageUrl ? '[Image Payload]' : '');
+  const summary = params.text || (params.imageUrl ? '[Image]' : '');
 
-  // Add message to messages array and update lastMessage
-  await updateDoc(chatDocRef, {
-    messages: arrayUnion(newMsg),
-    lastMessage: summary,
-    timestamp: Date.now(),
-  }).catch(async (err) => {
-    // If doc was missing or needs setDoc fallback:
-    const snap = await getDoc(chatDocRef);
-    if (!snap.exists()) {
-      await setDoc(chatDocRef, {
-        id: params.chatId,
-        name: params.senderName || 'VISITOR',
-        location: 'EARTH',
-        date: dateStr,
-        lastMessage: summary,
-        timestamp: Date.now(),
-        messages: [newMsg],
-      });
-    } else {
-      throw err;
+  // 1. Add new document to Firestore collection "activeChats" / {chatId} document / subcollection "messages"
+  try {
+    const subColRef = collection(firestore, 'activeChats', params.chatId, 'messages');
+    const subColPayload: any = {
+      id: newMsg.id,
+      from: senderLabel,
+      sender: params.from,
+      senderName: senderLabel,
+      text: params.text || '',
+      date: dateStr,
+      time: timeStr,
+      type: newMsg.type,
+      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    };
+    if (params.imageUrl) {
+      subColPayload.imageUrl = params.imageUrl;
     }
-  });
+    await addDoc(subColRef, cleanFirestorePayload(subColPayload));
+  } catch (subErr) {
+    console.warn('Subcollection write fallback:', subErr);
+  }
 
-  // Also sync to server backend for maximum multi-layer redundancy
+  // 2. Also update parent document: lastMessage and messages array
+  const sanitizedMsg = cleanFirestorePayload(newMsg);
+  try {
+    await updateDoc(chatDocRef, {
+      messages: arrayUnion(sanitizedMsg),
+      lastMessage: summary,
+      timestamp: Date.now(),
+    });
+  } catch (err) {
+    const fallbackDoc = cleanFirestorePayload({
+      id: params.chatId,
+      name: params.chatId.replace('req-', '').replace('chat-', '').replace(/-/g, ' ').toUpperCase(),
+      location: 'EARTH',
+      date: dateStr,
+      lastMessage: summary,
+      timestamp: Date.now(),
+      messages: [sanitizedMsg],
+    });
+    await setDoc(chatDocRef, fallbackDoc, { merge: true });
+  }
+
+  // 3. Multi-layer redundancy server sync
   try {
     await fetch('/api/chat/messages', {
       method: 'POST',
@@ -399,9 +598,9 @@ export async function sendChatMessageToFirestore(params: {
         visitorId: params.chatId,
         userId: params.chatId,
         sender: params.from,
-        senderName: newMsg.senderName,
+        senderName: senderLabel,
         message: newMsg.text,
-        imageUrl: newMsg.imageUrl,
+        imageUrl: newMsg.imageUrl || '',
       }),
     });
   } catch (e) {}

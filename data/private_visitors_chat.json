@@ -20,6 +20,14 @@
     }
   },
   "visitors": {
+    "req-rita-australia": {
+      "visitorId": "req-rita-australia",
+      "name": "RITA",
+      "location": "AUSTRALIA",
+      "timestamp": 1793373163652,
+      "lastMessage": "Uplink confirmed with Rita",
+      "unreadCount": 0
+    },
     "chat-elon-musk-texas": {
       "visitorId": "chat-elon-musk-texas",
       "name": "ELON MUSK",
@@ -38,6 +46,59 @@
     }
   },
   "messages": {
+    "req-rita-australia": [
+      {
+        "id": "msg-rita-seed-1",
+        "visitorId": "req-rita-australia",
+        "sender": "admin",
+        "senderName": "Elon Musk (Admin)",
+        "text": "Space transmission channel verified and accepted. Uplink established with Starbase, Texas.",
+        "message": "Space transmission channel verified and accepted. Uplink established with Starbase, Texas.",
+        "name": "RITA",
+        "city": "AUSTRALIA",
+        "timestamp": 1793346800000,
+        "timeString": "07:45 AM",
+        "read": true,
+        "isElon": false,
+        "isAdmin": true,
+        "isSystem": false,
+        "isVerified": true
+      },
+      {
+        "id": "msg-1793372244204-v54hy",
+        "visitorId": "req-rita-australia",
+        "sender": "admin",
+        "senderName": "ELON MUSK [ADMIN]",
+        "text": "hello",
+        "message": "hello",
+        "name": "Elon Musk (Admin)",
+        "city": "Texas",
+        "timestamp": 1793372244204,
+        "timeString": "02:57 PM",
+        "read": false,
+        "isElon": false,
+        "isAdmin": true,
+        "isSystem": false,
+        "isVerified": true
+      },
+      {
+        "id": "msg-1793373163652-2yrst",
+        "visitorId": "req-rita-australia",
+        "sender": "admin",
+        "senderName": "ELON MUSK [ADMIN]",
+        "text": "Uplink confirmed with Rita",
+        "message": "Uplink confirmed with Rita",
+        "name": "Elon Musk (Admin)",
+        "city": "Texas",
+        "timestamp": 1793373163652,
+        "timeString": "03:12 PM",
+        "read": false,
+        "isElon": false,
+        "isAdmin": true,
+        "isSystem": false,
+        "isVerified": true
+      }
+    ],
     "chat-elon-musk-texas": [
       {
         "id": "msg-1793289142497-init",

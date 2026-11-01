@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Sparkles, AlertTriangle, Cpu, Radio, Eye, Bot, ExternalLink, Check } from 'lucide-react';
+import { Send, Cpu, Bot, Check, Sparkles, Terminal } from 'lucide-react';
 import { GROK_TIERS } from '../data/elonverseData';
 import { GrokTier } from '../types';
 
@@ -16,23 +16,23 @@ export const GrokAISection: React.FC<GrokAISectionProps> = ({ onSubscribeTier })
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'user',
-      text: 'Explain investment like Wukari man',
+      text: 'How does the Memphis Colossus cluster train Grok?',
     },
     {
       sender: 'grok',
-      text: 'Investing na like planting yam o, you no just drop am and expect fruit next day. You buy good stock (e.g. Tesla, land, or farmland), give am time, make e grow. No be 2 days, na long game. But if you choose the right thing, e go pay you well! — Grok 😎',
+      text: 'Memphis Colossus harnesses 100,000 liquid-cooled Nvidia H100/H200 GPUs interconnected with RDMA over converged Ethernet. This allows us to train frontier multimodal models with massive context windows and real-time truth-seeking reasoning.',
     },
   ]);
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState<string>('x-premium');
+  const [subscribedTierId, setSubscribedTierId] = useState<string | null>(null);
 
   const presetQuestions = [
-    'Explain investment like Wukari man',
-    'How does Starship heat shield survive reentry?',
-    'When will Tesla Optimus start mass assembly in Austin?',
-    'What is the Expral Investment Plan return breakdown?',
+    'How does the Memphis Colossus cluster train Grok?',
+    'Explain the physics of Starship orbital propellant transfer',
+    'What are the mechanical DOFs of the Optimus Gen 2 hands?',
+    'How does Starlink Direct to Cell eliminate dead zones?',
   ];
 
   const handleSend = async (textToSend?: string) => {
@@ -51,15 +51,14 @@ export const GrokAISection: React.FC<GrokAISectionProps> = ({ onSubscribeTier })
         body: JSON.stringify({ prompt: text }),
       });
       const data = await res.json();
-      const replyText = data.reply || 'Grok is processing multiplanetary equations right now. Please try again.';
+      const replyText = data.reply || 'Grok is synthesizing multiplanetary telemetry right now. Please try again in a moment.';
       setMessages((prev) => [...prev, { sender: 'grok', text: replyText }]);
-    } catch (err) {
-      // Graceful fallback
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
           sender: 'grok',
-          text: 'Investing and technology are long-term games. Keep patience and focus on core infrastructure! — Grok',
+          text: 'Grok 2 is calibrated for maximal truth-seeking and minimal bias. First principles engineering is the ultimate north star.',
         },
       ]);
     } finally {
@@ -67,181 +66,170 @@ export const GrokAISection: React.FC<GrokAISectionProps> = ({ onSubscribeTier })
     }
   };
 
+  const handleSubscribe = (tier: GrokTier) => {
+    onSubscribeTier(tier);
+    setSubscribedTierId(tier.id);
+    setTimeout(() => setSubscribedTierId(null), 3000);
+  };
+
   return (
-    <section id="ai" className="py-16 px-4 max-w-7xl mx-auto scroll-mt-20">
+    <section id="ai" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
       {/* Section Header */}
-      <div className="mb-8 text-left">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-          xAI &mdash; Grok 4 <span className="text-neutral-500 font-light">&mdash; Most Powerful, Most Funny AI</span>
-        </h2>
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-[#1A2A4A]">
+        <div>
+          <span className="text-xs uppercase tracking-widest text-[#00F0FF] font-semibold">
+            Frontier Artificial Intelligence
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mt-1">
+            xAI &mdash; Grok Intelligence
+          </h2>
+          <p className="text-sm text-[#AAB7CC] mt-1 max-w-2xl">
+            Maximum truth-seeking AI built by xAI. Powered by the world’s largest GPU supercomputer cluster in Memphis, Tennessee.
+          </p>
+        </div>
+        <div className="mt-4 md:mt-0 flex items-center gap-3 text-xs text-[#AAB7CC]">
+          <span>100k H100 Supercluster</span>
+          <span>·</span>
+          <span className="text-[#00F0FF]">Uncensored Truth-Seeking</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Interactive Grok Chatbox */}
-        <div className="lg:col-span-6 rounded-2xl bg-[#0a0a0a] border border-neutral-800 p-5 shadow-2xl flex flex-col h-[520px]">
-          {/* Grok Header */}
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-800 text-xs font-mono">
+        {/* Interactive Grok Terminal */}
+        <div className="lg:col-span-7 rounded-2xl bg-[#0A152A] border border-[#1A2A4A] p-5 flex flex-col h-[520px]">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1A2A4A] mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-white text-black flex items-center justify-center font-bold text-xs">
-                xI
-              </div>
-              <span className="text-white font-semibold tracking-wide">Grok 4.0 Omni</span>
+              <Bot className="w-5 h-5 text-[#00F0FF]" />
+              <span className="text-sm font-bold text-white">Grok 2 Live Neural Interface</span>
             </div>
-            <div className="flex items-center gap-2 text-neutral-400">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Memphis Colossus Online</span>
-            </div>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              COLOSSUS CLUSTER: ONLINE
+            </span>
           </div>
 
-          {/* Quick Presets */}
-          <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 text-[11px] no-scrollbar">
-            {presetQuestions.map((q) => (
+          {/* Quick preset chips */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {presetQuestions.map((q, idx) => (
               <button
-                key={q}
+                key={idx}
                 onClick={() => handleSend(q)}
-                className="whitespace-nowrap px-2.5 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded-md bg-[#050A14] text-[#AAB7CC] hover:text-[#00F0FF] border border-[#1A2A4A] hover:border-[#00F0FF]/40 transition-colors truncate max-w-full text-left"
               >
                 {q}
               </button>
             ))}
           </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 my-2">
+          {/* Messages list */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
             {messages.map((m, idx) => (
               <div
                 key={idx}
-                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+                className={`p-3 rounded-xl text-xs leading-relaxed max-w-[90%] ${
+                  m.sender === 'user'
+                    ? 'ml-auto bg-[#00F0FF]/15 text-white border border-[#00F0FF]/30'
+                    : 'mr-auto bg-[#050A14] text-[#AAB7CC] border border-[#1A2A4A]'
+                }`}
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                    m.sender === 'user'
-                      ? 'bg-neutral-800 text-white rounded-br-sm'
-                      : 'bg-neutral-900/90 border border-neutral-800 text-neutral-200 rounded-bl-sm'
-                  }`}
-                >
-                  {m.text}
-                </div>
+                <span className="text-[10px] font-mono block mb-1 font-semibold text-[#00F0FF]">
+                  {m.sender === 'user' ? 'YOU' : 'GROK (xAI)'}
+                </span>
+                <p className="whitespace-pre-wrap">{m.text}</p>
               </div>
             ))}
             {isLoading && (
-              <div className="flex items-center gap-2 text-xs text-neutral-500 py-2">
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                <span>Grok is synthesizing answer...</span>
+              <div className="p-3 rounded-xl bg-[#050A14] border border-[#1A2A4A] text-xs text-[#00F0FF] animate-pulse">
+                Grok is reasoning through 100k GPU nodes...
               </div>
             )}
           </div>
 
-          {/* Chat Input */}
+          {/* Input field */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSend();
             }}
-            className="pt-3 border-t border-neutral-800 flex items-center gap-2"
+            className="flex gap-2 pt-3 border-t border-[#1A2A4A] mt-2"
           >
             <input
               type="text"
+              placeholder="Ask Grok about physics, rockets, code, or reality..."
               value={inputPrompt}
               onChange={(e) => setInputPrompt(e.target.value)}
-              placeholder="Ask Grok anything..."
-              className="flex-1 bg-neutral-900/80 border border-neutral-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white transition-colors"
+              className="flex-1 px-3 py-2 rounded-lg bg-[#050A14] border border-[#1A2A4A] text-xs text-white placeholder-[#AAB7CC]/60 focus:outline-none focus:border-[#00F0FF]"
             />
             <button
               type="submit"
               disabled={isLoading || !inputPrompt.trim()}
-              className="p-2.5 rounded-xl bg-white text-black hover:bg-neutral-200 disabled:opacity-40 transition-colors shrink-0"
-              aria-label="Send message to Grok"
+              className="py-2 px-4 rounded-lg bg-[#00F0FF] text-[#050A14] font-bold text-xs hover:bg-[#00F0FF]/90 transition-all disabled:opacity-50 flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
+              <span>Send</span>
             </button>
           </form>
         </div>
 
-        {/* Right Column: Capabilities & Tiers matching screenshot */}
-        <div className="lg:col-span-6 space-y-4">
-          {/* 3 High-Tech Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-[#0e0e0e] border border-neutral-800 flex items-start gap-3">
-              <Eye className="w-5 h-5 text-neutral-300 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-white mb-0.5">Grok Voice + Vision</h4>
-                <p className="text-[11px] text-neutral-400">See, hear, and interact with the physical world in real-time.</p>
-              </div>
-            </div>
+        {/* Tiers & Subscriptions */}
+        <div className="lg:col-span-5 space-y-4">
+          {GROK_TIERS.map((tier) => {
+            const isSubscribed = subscribedTierId === tier.id;
 
-            <div className="p-4 rounded-xl bg-[#0e0e0e] border border-neutral-800 flex items-start gap-3">
-              <Cpu className="w-5 h-5 text-neutral-300 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-white mb-0.5">$40B in Compute</h4>
-                <p className="text-[11px] text-neutral-400">Scaling Memphis cluster to 1M H100/H200 and Blackwell GPUs.</p>
-              </div>
-            </div>
-
-            <div className="sm:col-span-2 p-3.5 rounded-xl bg-[#0e0e0e] border border-neutral-800 flex items-center gap-3">
-              <Radio className="w-4 h-4 text-sky-400 shrink-0" />
-              <div className="flex-1">
-                <span className="text-xs font-semibold text-white mr-2">Real-time X Data:</span>
-                <span className="text-[11px] text-neutral-400">Live news, global trends, breaking geopolitical sentiment without latency.</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing Tiers matching screenshot */}
-          <div className="grid grid-cols-3 gap-3">
-            {GROK_TIERS.map((tier) => (
+            return (
               <div
                 key={tier.id}
-                onClick={() => setSelectedTier(tier.id)}
-                className={`cursor-pointer rounded-xl p-3.5 border transition-all text-left flex flex-col justify-between ${
-                  selectedTier === tier.id
-                    ? 'bg-neutral-900 border-white text-white shadow-lg'
-                    : 'bg-[#0c0c0c] border-neutral-800 hover:border-neutral-700 text-neutral-300'
+                className={`p-5 rounded-2xl bg-[#0A152A] border transition-all ${
+                  tier.isPopular
+                    ? 'border-[#00F0FF] shadow-[0_0_20px_rgba(0,240,255,0.15)]'
+                    : 'border-[#1A2A4A] hover:border-[#1A2A4A]/80'
                 }`}
               >
-                <div>
-                  <h4 className="text-xs font-bold mb-0.5">{tier.name}</h4>
-                  <p className="text-[10px] text-neutral-400 mb-2 truncate">{tier.description}</p>
-                </div>
-                <div>
-                  <div className="text-base font-bold font-mono">
-                    ${tier.priceMonthly}
-                    <span className="text-[10px] font-normal text-neutral-400">/mo</span>
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h4 className="text-base font-bold text-white">{tier.name}</h4>
+                    <p className="text-xs text-[#AAB7CC] mt-0.5">{tier.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold font-mono text-white">
+                      ${tier.priceMonthly}
+                    </span>
+                    <span className="text-[10px] text-[#AAB7CC] block">/ month</span>
                   </div>
                 </div>
+
+                <ul className="space-y-1.5 my-4 text-xs text-[#AAB7CC]">
+                  {tier.features.map((feat, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-[#00F0FF] shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleSubscribe(tier)}
+                  className={`w-full py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2 ${
+                    isSubscribed
+                      ? 'bg-emerald-500 text-white'
+                      : tier.isPopular
+                      ? 'bg-[#00F0FF] text-[#050A14] hover:bg-[#00F0FF]/90 hover:shadow-[0_0_15px_rgba(0,240,255,0.3)]'
+                      : 'bg-[#050A14] border border-[#1A2A4A] text-white hover:border-[#00F0FF]'
+                  }`}
+                >
+                  {isSubscribed ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Subscribed to {tier.name}</span>
+                    </>
+                  ) : (
+                    <span>
+                      {tier.priceMonthly === 0 ? 'Start Free Access' : `Subscribe (${tier.priceMonthly}/mo)`}
+                    </span>
+                  )}
+                </button>
               </div>
-            ))}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => {
-                const target = GROK_TIERS.find((t) => t.id === selectedTier) || GROK_TIERS[1];
-                onSubscribeTier(target);
-              }}
-              className="py-2.5 px-4 rounded-xl bg-white text-black text-xs font-semibold hover:bg-neutral-200 transition-colors shadow-sm text-center"
-            >
-              Try Grok Now
-            </button>
-            <a
-              href="https://x.ai/api"
-              target="_blank"
-              rel="noreferrer"
-              className="py-2.5 px-4 rounded-xl bg-neutral-900 border border-neutral-700 text-white text-xs font-medium hover:bg-neutral-800 transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>API Docs</span>
-              <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
-            </a>
-          </div>
-
-          {/* Warning Banner matching screenshot */}
-          <div className="p-3 rounded-xl bg-red-950/30 border border-red-900/50 flex items-start gap-2.5 text-left">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-neutral-300 leading-snug">
-              <strong className="text-white">Grok Prediction:</strong> 200+ neoclouds will see guppy-level death &mdash; SpaceX is insulated due to Starlink recurring orbital revenue.
-            </p>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

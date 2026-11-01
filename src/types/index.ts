@@ -8,6 +8,10 @@ export type CategoryType =
   | 'robots' 
   | 'future' 
   | 'investments' 
+  | 'satcom'
+  | 'neuralink'
+  | 'boring'
+  | 'xplatform'
   | 'social';
 
 export interface Vehicle {
@@ -42,7 +46,7 @@ export interface SpaceProduct {
   price: number;
   deposit?: number;
   priceNote?: string;
-  type: 'starship' | 'falcon9' | 'dragon' | 'mars';
+  type: 'starship' | 'falcon9' | 'heavy' | 'dragon' | 'mars';
   seats?: number;
   nextLaunch?: string;
   image: string;
@@ -139,13 +143,45 @@ export interface ExpralInvestmentPlan {
 export interface CartItem {
   id: string;
   title: string;
-  category: CategoryType;
+  category: CategoryType | string;
   price: number;
   recurringMonthly?: number;
   quantity: number;
   image?: string;
   currency: string;
   details?: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  image: string;
+  details?: string;
+  dateAdded: string;
+}
+
+export interface MarketplaceNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: 'system' | 'order' | 'tech' | 'launch';
+  actionUrl?: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  category: string;
+  source: string;
+  date: string;
+  readTime: string;
+  summary: string;
+  url: string;
+  image?: string;
 }
 
 export interface CommunityMessage {

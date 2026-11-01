@@ -10,6 +10,7 @@ interface CartAndCheckoutSectionProps {
   onClearCart: () => void;
   userName: string;
   onDirectOrderChat?: (itemsSummary: string, total: number) => void;
+  onOpenMessageSupport?: (topic: string) => void;
 }
 
 interface OrderConfirmation {
@@ -30,12 +31,10 @@ export const CartAndCheckoutSection: React.FC<CartAndCheckoutSectionProps> = ({
   onClearCart,
   userName,
   onDirectOrderChat,
+  onOpenMessageSupport,
 }) => {
   const [customerEmail, setCustomerEmail] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('Lagos, Nigeria');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8821');
-  const [cardExpiry, setCardExpiry] = useState('08/28');
-  const [cardCvc, setCardCvc] = useState('420');
+  const [deliveryAddress, setDeliveryAddress] = useState('Austin, Texas, USA');
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OrderConfirmation | null>(null);
 
@@ -62,31 +61,30 @@ export const CartAndCheckoutSection: React.FC<CartAndCheckoutSectionProps> = ({
           items: cartItems,
           customer: {
             name: userName || 'Explorer',
-            email: customerEmail || 'guest@elonverse.com',
+            email: customerEmail || 'customer@elonmuskspace.com',
             address: deliveryAddress,
           },
         }),
       });
 
-      const data = await response.json();
-      const generatedOrderId = data.orderId || `EV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      const data = await response.json().catch(() => ({}));
+      const generatedOrderId = data.orderId || `EMS-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-      // Launch Confetti Celebration
       try {
         confetti({
-          particleCount: 120,
+          particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#ffffff', '#38bdf8', '#34d399', '#f59e0b'],
+          colors: ['#00F0FF', '#1E88E5', '#FFFFFF', '#34D399'],
         });
-      } catch (err) {
+      } catch {
         // ignore
       }
 
       setCompletedOrder({
         orderId: generatedOrderId,
         customerName: userName || 'Explorer',
-        email: customerEmail || 'guest@elonverse.com',
+        email: customerEmail || 'customer@elonmuskspace.com',
         address: deliveryAddress,
         items: [...cartItems],
         oneTimeTotal,
@@ -103,278 +101,235 @@ export const CartAndCheckoutSection: React.FC<CartAndCheckoutSectionProps> = ({
   };
 
   return (
-    <section id="cart" className="py-20 px-4 max-w-7xl mx-auto scroll-mt-20">
-      {/* Section Header matching screenshot */}
-      <div className="mb-8 text-left">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-          Your Cart <span className="text-neutral-500 font-light">&mdash; One Checkout, Everything</span>
-        </h2>
-        <p className="text-xs font-mono text-neutral-400">
-          Tesla + Starlink + Grok + Optimus &middot; Consolidated Global Fulfillment
-        </p>
+    <section id="checkout" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto scroll-mt-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 pb-4 border-b border-[#1A2A4A]">
+        <div>
+          <span className="text-xs uppercase tracking-widest text-[#00F0FF] font-semibold">
+            Order Fulfillment & Logistics
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mt-1">
+            Shopping Cart & Checkout
+          </h2>
+          <p className="text-sm text-[#AAB7CC] mt-1 max-w-2xl">
+            Review your selected Tesla vehicles, Starlink hardware kits, Powerwall storage, and mission reservations.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Visual Showcase & Checkout All */}
-        <div className="lg:col-span-4 rounded-2xl bg-[#090909] border border-neutral-800 p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-3 text-xs font-mono text-neutral-400">
-              <Package className="w-4 h-4 text-white" />
-              <span>Multi-Product Cart Sync</span>
+      {completedOrder ? (
+        <div className="rounded-2xl bg-[#0A152A] border border-[#1A2A4A] p-8 text-center max-w-2xl mx-auto shadow-[0_0_30px_rgba(0,240,255,0.15)]">
+          <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-500/40">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-1">Order Prepared & Confirmed</h3>
+          <p className="text-xs text-[#AAB7CC] mb-6">
+            Order <strong className="text-[#00F0FF] font-mono">{completedOrder.orderId}</strong> recorded at {completedOrder.timestamp}.
+          </p>
+
+          <div className="p-4 rounded-xl bg-[#050A14] border border-[#1A2A4A] text-left text-xs space-y-2 mb-6">
+            <div className="flex justify-between py-1 border-b border-[#1A2A4A]/60">
+              <span className="text-[#AAB7CC]">Recipient</span>
+              <span className="text-white font-semibold">{completedOrder.customerName}</span>
             </div>
-            <div className="h-44 rounded-xl overflow-hidden bg-neutral-950 flex items-center justify-center p-3 mb-4 border border-neutral-900">
-              <img
-                src="/src/assets/images/tesla_vehicles_lineup_1793126081993.jpg"
-                alt="Selected hardware bundle"
-                referrerPolicy="no-referrer"
-                className="max-h-full max-w-full object-contain filter contrast-105"
-              />
+            <div className="flex justify-between py-1 border-b border-[#1A2A4A]/60">
+              <span className="text-[#AAB7CC]">Delivery Destination</span>
+              <span className="text-white">{completedOrder.address}</span>
             </div>
-            <h3 className="text-base font-bold text-white mb-1">
-              Consolidated Delivery
-            </h3>
-            <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-              Order your Tesla vehicle, Starlink satellite kit, and reserved Optimus priority queue in a single verified transaction with zero password friction.
-            </p>
+            <div className="flex justify-between py-1 border-b border-[#1A2A4A]/60">
+              <span className="text-[#AAB7CC]">Total One-Time Amount</span>
+              <span className="text-[#00F0FF] font-mono font-bold">${completedOrder.oneTimeTotal.toLocaleString()}</span>
+            </div>
+            {completedOrder.monthlyTotal > 0 && (
+              <div className="flex justify-between py-1">
+                <span className="text-[#AAB7CC]">Monthly Recurring Services</span>
+                <span className="text-emerald-400 font-mono font-bold">${completedOrder.monthlyTotal.toLocaleString()}/mo</span>
+              </div>
+            )}
           </div>
 
-          <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-900 text-xs text-neutral-400 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>End-to-End Encrypted &middot; Test Mode Verified</span>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setCompletedOrder(null)}
+              className="flex-1 py-2.5 rounded-xl bg-[#00F0FF] text-[#050A14] font-bold text-xs hover:bg-[#00F0FF]/90 transition-all"
+            >
+              Continue Shopping
+            </button>
+            {onOpenMessageSupport && (
+              <button
+                onClick={() =>
+                  onOpenMessageSupport(
+                    `Inquiry regarding confirmed order ${completedOrder.orderId} (Total: $${completedOrder.oneTimeTotal.toLocaleString()})`
+                  )
+                }
+                className="py-2.5 px-4 rounded-xl bg-[#050A14] border border-[#1A2A4A] hover:border-[#00F0FF] text-white text-xs font-semibold transition-colors"
+              >
+                Track With Support Team
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Center Column: Order Summary & Quick Checkout Form matching screenshot */}
-        <div className="lg:col-span-8 rounded-2xl bg-[#0a0a0a] border border-neutral-800 p-6 shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 mb-6 border-b border-neutral-800">
-            {/* Order Items Breakdown */}
-            <div>
-              <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wider font-mono">
-                Order Summary
-              </h3>
-
-              {cartItems.length === 0 ? (
-                <div className="py-8 text-center text-xs text-neutral-500 font-mono">
-                  Your cart is currently empty.
-                  <br />
-                  Explore vehicles, Starlink, or Expral plans above.
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                  {cartItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between text-xs pb-2 border-b border-neutral-900 font-mono"
-                    >
-                      <div className="truncate max-w-[170px]">
-                        <span className="text-white font-semibold">{item.title}</span>
-                        {item.details && (
-                          <span className="text-[10px] text-neutral-500 block truncate">
-                            {item.details}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <span className="text-white font-bold block">
-                            ${(item.price * item.quantity).toLocaleString()}
-                          </span>
-                          {item.recurringMonthly && (
-                            <span className="text-[10px] text-neutral-400">
-                              +${item.recurringMonthly * item.quantity}/mo
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-800">
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, -1)}
-                            className="p-0.5 text-neutral-400 hover:text-white"
-                          >
-                            <Minus className="w-2.5 h-2.5" />
-                          </button>
-                          <span className="text-xs text-white px-1">{item.quantity}</span>
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, 1)}
-                            className="p-0.5 text-neutral-400 hover:text-white"
-                          >
-                            <Plus className="w-2.5 h-2.5" />
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => onRemoveItem(item.id)}
-                          className="text-neutral-500 hover:text-rose-400 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Total Row matching screenshot */}
-              <div className="mt-4 pt-3 border-t border-neutral-800 flex justify-between items-baseline font-mono">
-                <span className="text-xs text-neutral-400">Total:</span>
-                <div className="text-right">
-                  <span className="text-xl font-extrabold text-white">
-                    ${oneTimeTotal.toLocaleString()}
-                  </span>
-                  {monthlyTotal > 0 && (
-                    <span className="text-xs text-neutral-400 ml-1.5">
-                      + ${monthlyTotal.toLocaleString()}/mo
-                    </span>
-                  )}
-                </div>
-              </div>
+      ) : cartItems.length === 0 ? (
+        <div className="rounded-2xl bg-[#0A152A] border border-[#1A2A4A] p-12 text-center max-w-xl mx-auto">
+          <Package className="w-12 h-12 text-[#AAB7CC] mx-auto mb-3 opacity-60" />
+          <h3 className="text-lg font-bold text-white mb-1">Your Cart is Currently Empty</h3>
+          <p className="text-xs text-[#AAB7CC] mb-6">
+            Explore Tesla vehicles, Starlink hardware kits, Powerwall energy units, or SpaceX mission slots to add items to your cart.
+          </p>
+          <a
+            href="#vehicles"
+            className="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-[#00F0FF] text-[#050A14] font-bold text-xs hover:bg-[#00F0FF]/90 transition-all"
+          >
+            <span>Explore Tesla Vehicles</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Items List */}
+          <div className="lg:col-span-7 space-y-3">
+            <div className="flex items-center justify-between pb-2 text-xs text-[#AAB7CC]">
+              <span>{cartItems.length} Product Types Selected</span>
+              <button
+                onClick={onClearCart}
+                className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
+              >
+                Clear All
+              </button>
             </div>
 
-            {/* Quick Checkout Form matching screenshot */}
-            <div>
-              <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wider font-mono">
-                Quick Checkout
-              </h3>
-
-              <form onSubmit={handlePayNow} className="space-y-3">
-                <div>
-                  <label className="text-[11px] text-neutral-400 block mb-1">
-                    Receipt Email / Name (No Password Required)
-                  </label>
-                  <input
-                    type="text"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="you@example.com or Guest Explorer"
-                    className="w-full bg-neutral-900 border border-neutral-700/80 rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 block mb-1">Card details</label>
-                  <div className="grid grid-cols-12 gap-1.5">
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="Card number"
-                      className="col-span-7 bg-neutral-900 border border-neutral-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-white"
+            {cartItems.map((item) => (
+              <div
+                key={item.id}
+                className="p-4 rounded-xl bg-[#0A152A] border border-[#1A2A4A] flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-16 h-14 rounded-lg bg-[#050A14] object-contain border border-[#1A2A4A] p-1 shrink-0"
                     />
-                    <input
-                      type="text"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                      placeholder="MM/YY"
-                      className="col-span-3 bg-neutral-900 border border-neutral-700/80 rounded-lg px-2 py-1.5 text-xs text-white font-mono text-center focus:outline-none focus:border-white"
-                    />
-                    <input
-                      type="text"
-                      value={cardCvc}
-                      onChange={(e) => setCardCvc(e.target.value)}
-                      placeholder="CVC"
-                      className="col-span-2 bg-neutral-900 border border-neutral-700/80 rounded-lg px-2 py-1.5 text-xs text-white font-mono text-center focus:outline-none focus:border-white"
-                    />
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-white truncate">{item.title}</h4>
+                    {item.details && (
+                      <p className="text-[11px] text-[#AAB7CC] truncate">{item.details}</p>
+                    )}
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-xs font-mono font-bold text-[#00F0FF]">
+                        ${item.price.toLocaleString()}
+                      </span>
+                      {item.recurringMonthly && (
+                        <span className="text-[10px] text-[#AAB7CC] font-mono">
+                          +${item.recurringMonthly}/mo
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[11px] text-neutral-400 block mb-1">Delivery address</label>
+                <div className="flex items-center gap-3 shrink-0">
+                  {/* Quantity Stepper */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#050A14] border border-[#1A2A4A]">
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, -1)}
+                      className="p-1 text-[#AAB7CC] hover:text-white rounded hover:bg-[#0A152A]"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="text-xs font-mono px-1.5 text-white font-bold">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, 1)}
+                      className="p-1 text-[#AAB7CC] hover:text-white rounded hover:bg-[#0A152A]"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => onRemoveItem(item.id)}
+                    className="p-2 text-[#AAB7CC] hover:text-rose-400 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right Column: Order Summary & Checkout Form */}
+          <div className="lg:col-span-5 rounded-2xl bg-[#0A152A] border border-[#1A2A4A] p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-white mb-4 pb-2 border-b border-[#1A2A4A]">
+              Order Summary
+            </h3>
+
+            <div className="space-y-2 text-xs text-[#AAB7CC] mb-4">
+              <div className="flex justify-between">
+                <span>Subtotal (Hardware & Vehicles)</span>
+                <span className="font-mono text-white">${oneTimeTotal.toLocaleString()}</span>
+              </div>
+              {monthlyTotal > 0 && (
+                <div className="flex justify-between">
+                  <span>Recurring Services (Monthly)</span>
+                  <span className="font-mono text-[#00F0FF]">${monthlyTotal.toLocaleString()}/mo</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Estimated Freight & Transport</span>
+                <span className="font-mono text-emerald-400">Included (Complimentary)</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-[#1A2A4A] text-sm font-bold text-white">
+                <span>Total Due</span>
+                <span className="font-mono text-xl text-[#00F0FF]">${oneTimeTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <form onSubmit={handlePayNow} className="space-y-3 pt-3 border-t border-[#1A2A4A]">
+              <div>
+                <label className="text-[11px] font-semibold text-[#AAB7CC] block mb-1">
+                  Delivery Destination / Local Service Hub
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#AAB7CC]" />
                   <input
                     type="text"
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="Lagos, Nigeria"
-                    className="w-full bg-neutral-900 border border-neutral-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-white"
+                    className="w-full pl-8 pr-3 py-2 rounded-lg bg-[#050A14] border border-[#1A2A4A] text-white text-xs focus:outline-none focus:border-[#00F0FF]"
                   />
                 </div>
-
-                <div className="pt-2 space-y-2">
-                  {onDirectOrderChat && cartItems.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const summary = cartItems.map((i) => `${i.quantity}x ${i.title} ($${i.price.toLocaleString()})`).join(', ');
-                        onDirectOrderChat(summary, oneTimeTotal);
-                      }}
-                      className="w-full py-2.5 bg-gradient-to-r from-amber-500/20 via-sky-500/20 to-emerald-500/20 border border-amber-500/40 hover:border-amber-400 text-amber-200 hover:text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-md group"
-                    >
-                      <span>💬 Order via Private Chat with Elon Musk (Owner 👑)</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={cartItems.length === 0 || isProcessing}
-                    className="w-full py-2.5 bg-white text-black text-xs font-bold rounded-lg hover:bg-neutral-200 disabled:opacity-50 transition-colors shadow-lg flex items-center justify-center gap-2"
-                  >
-                    {isProcessing ? (
-                      <span>Verifying with Global Gateway...</span>
-                    ) : (
-                      <>
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span>Pay Now &mdash; ${oneTimeTotal.toLocaleString()}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div className="text-[11px] text-neutral-500 font-mono text-center">
-            *Safe test mode checkout. Card charges are simulated for the demonstration. No raw credit card data stored.
-          </div>
-        </div>
-      </div>
-
-      {/* Verified Order Receipt Modal */}
-      {completedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-[#0d0d0d] border border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center">
-            <button
-              onClick={() => setCompletedOrder(null)}
-              className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white rounded-full bg-neutral-900"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-white mb-1">
-              Order Confirmed!
-            </h3>
-            <p className="text-xs text-neutral-400 mb-6">
-              Thank you, <strong className="text-white">{completedOrder.customerName}</strong>. Your ELONVERSE consolidated order is being routed to mission operations.
-            </p>
-
-            <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-800 text-left font-mono text-xs space-y-2 mb-6">
-              <div className="flex justify-between border-b border-neutral-900 pb-2">
-                <span className="text-neutral-500">ORDER IDENTIFIER:</span>
-                <span className="text-white font-bold">{completedOrder.orderId}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">DESTINATION:</span>
-                <span className="text-white">{completedOrder.address}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">AMOUNT PAID TODAY:</span>
-                <span className="text-emerald-400 font-bold">
-                  ${completedOrder.oneTimeTotal.toLocaleString()}
-                </span>
-              </div>
-              {completedOrder.monthlyTotal > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">RECURRING SUBSCRIPTION:</span>
-                  <span className="text-white">${completedOrder.monthlyTotal.toLocaleString()}/mo</span>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-2">
+              <div>
+                <label className="text-[11px] font-semibold text-[#AAB7CC] block mb-1">
+                  Contact Email for Order Tracking
+                </label>
+                <input
+                  type="email"
+                  placeholder="your-email@example.com"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#050A14] border border-[#1A2A4A] text-white text-xs focus:outline-none focus:border-[#00F0FF]"
+                />
+              </div>
+
               <button
-                onClick={() => setCompletedOrder(null)}
-                className="w-full py-2.5 bg-white text-black text-xs font-semibold rounded-lg hover:bg-neutral-200 transition-colors"
+                type="submit"
+                disabled={isProcessing}
+                className="w-full py-3 rounded-xl bg-[#00F0FF] text-[#050A14] font-bold text-xs hover:bg-[#00F0FF]/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.3)] disabled:opacity-50 mt-4"
               >
-                Continue Exploring Universe
+                <ShieldCheck className="w-4 h-4" />
+                <span>
+                  {isProcessing
+                    ? 'Preparing Order Manifest...'
+                    : `Complete Order Preparation ($${oneTimeTotal.toLocaleString()})`}
+                </span>
               </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

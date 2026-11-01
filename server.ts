@@ -13,7 +13,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
+const UPLOAD_DIR = path.resolve(__dirname, 'public', 'uploads', 'chat');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  try {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  } catch (err) {
+    console.warn('Could not create upload directory:', err);
+  }
+}
+app.use('/uploads', express.static(path.resolve(__dirname, 'public', 'uploads')));
 
 // Initialize Google GenAI client if GEMINI_API_KEY is available
 let ai: GoogleGenAI | null = null;
@@ -136,6 +146,65 @@ app.post('/api/checkout', (req, res) => {
     customerName: customer?.name || 'Explorer',
     deliveryAddress: customer?.address || 'Lagos, Nigeria',
     message: 'Your ELONVERSE order has been confirmed and logged.',
+  });
+});
+
+// POST /api/chat/upload - Upload chat images with validation
+app.post('/api/chat/upload', (req, res) => {
+  try {
+    const { conversationId, filename, mimeType, dataUrl } = req.body;
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      res.status(400).json({ error: 'dataUrl is required' });
+      return;
+    }
+
+    if (mimeType && !mimeType.startsWith('image/')) {
+      res.status(400).json({ error: 'Only image files are permitted' });
+      return;
+    }
+
+    const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      // If plain base64 without data prefix
+      res.json({ url: dataUrl });
+      return;
+    }
+
+    const ext = mimeType ? mimeType.split('/')[1] : 'jpg';
+    const safeName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+    const filePath = path.join(UPLOAD_DIR, safeName);
+    const buffer = Buffer.from(matches[2], 'base64');
+
+    // Max 5MB
+    if (buffer.length > 5 * 1024 * 1024) {
+      res.status(400).json({ error: 'Image exceeds 5MB size limit' });
+      return;
+    }
+
+    fs.writeFileSync(filePath, buffer);
+    const publicUrl = `/uploads/chat/${safeName}`;
+    res.json({ success: true, url: publicUrl });
+  } catch (err: any) {
+    console.error('Upload error in server:', err);
+    res.status(500).json({ error: 'Failed to process image upload' });
+  }
+});
+
+// POST /api/admin/verify - Server-side verification for elonmuskspace241@gmail.com
+app.post('/api/admin/verify', (req, res) => {
+  const { email } = req.body;
+  const AUTHORIZED_ADMIN = 'elonmuskspace241@gmail.com';
+
+  if (!email || String(email).trim().toLowerCase() !== AUTHORIZED_ADMIN) {
+    res.status(403).json({ authorized: false, error: 'Unauthorized administrator email' });
+    return;
+  }
+
+  res.json({
+    authorized: true,
+    email: AUTHORIZED_ADMIN,
+    role: 'super_admin',
+    verifiedAt: Date.now(),
   });
 });
 

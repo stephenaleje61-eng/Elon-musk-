@@ -1,29 +1,108 @@
 {
   "entities": {
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Private 1-to-1 conversation between a visitor and the platform support staff",
+      "type": "object",
+      "properties": {
+        "conversationId": {
+          "type": "string",
+          "description": "Unique conversation identifier"
+        },
+        "visitorId": {
+          "type": "string",
+          "description": "Authenticated visitor Firebase UID"
+        },
+        "visitorName": {
+          "type": "string",
+          "description": "Display name or callsign of the visitor"
+        },
+        "visitorEmail": {
+          "type": "string",
+          "description": "Optional contact email of the visitor"
+        },
+        "lastMessage": {
+          "type": "string",
+          "description": "Preview of the most recent message"
+        },
+        "lastMessageAt": {
+          "type": "string",
+          "description": "Timestamp of the most recent message"
+        },
+        "unreadForAdmin": {
+          "type": "number",
+          "description": "Count of unread messages for administrator"
+        },
+        "unreadForVisitor": {
+          "type": "number",
+          "description": "Count of unread messages for visitor"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "closed", "blocked"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Conversation creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["conversationId", "visitorId", "visitorName", "status"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual message inside a private conversation",
+      "type": "object",
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "description": "Unique message identifier"
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Parent conversation identifier"
+        },
+        "senderId": {
+          "type": "string",
+          "description": "UID of the sender"
+        },
+        "senderRole": {
+          "type": "string",
+          "enum": ["visitor", "admin"]
+        },
+        "text": {
+          "type": "string",
+          "description": "Message text content"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional attachment URL from Firebase Storage"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of message creation"
+        },
+        "deliveryStatus": {
+          "type": "string",
+          "enum": ["sent", "delivered", "read"]
+        }
+      },
+      "required": ["messageId", "conversationId", "senderId", "senderRole", "deliveryStatus"]
+    },
     "JoinRequest": {
       "title": "JoinRequest",
       "description": "Space join request submitted by visitor",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "accepted", "declined"]
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] }
       },
       "required": ["id", "name", "location", "status"]
     },
@@ -32,30 +111,24 @@
       "description": "Active approved 2-way chat channel with messages array",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "location": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string"
-        },
-        "lastMessage": {
-          "type": "string"
-        },
-        "messages": {
-          "type": "array",
-          "description": "List of message objects in chat"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "date": { "type": "string" },
+        "lastMessage": { "type": "string" }
       },
       "required": ["id", "name", "location"]
     }
   },
   "firestore": {
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Primary private 1-to-1 conversation metadata"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Permanent subcollection messages for a conversation"
+    },
     "/joinRequests/{requestId}": {
       "schema": "JoinRequest",
       "description": "Pending and reviewed space join requests"
